@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="ad.size" content="width=320,height=480" />
+  <title>Magent Tetris Shape Match Playable</title>
+  <style>
+:root {
+  --bg-1: #101427;
+  --bg-2: #21184a;
+  --accent: #8b5cf6;
+  --accent-2: #22d3ee;
+  --good: #34d399;
+  --warn: #fbbf24;
+  --danger: #fb7185;
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.72);
+  --card: rgba(255, 255, 255, 0.09);
+  --line: rgba(255, 255, 255, 0.16);
+  --board-size: min(76vw, 310px);
+  --cell: calc(var(--board-size) / 7);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; min-height: 100%; background: #080b18; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif; }
+body { display: grid; place-items: center; overflow: hidden; color: var(--text); }
+button { font: inherit; }
+
+.playable {
+  position: relative;
+  width: min(100vw, 430px);
+  height: min(100vh, 760px);
+  min-height: 560px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(34, 211, 238, 0.22), transparent 26%),
+    radial-gradient(circle at 82% 6%, rgba(251, 191, 36, 0.18), transparent 24%),
+    radial-gradient(circle at 50% 100%, rgba(139, 92, 246, 0.45), transparent 45%),
+    linear-gradient(160deg, var(--bg-1), var(--bg-2));
+  isolation: isolate;
+  user-select: none;
+  touch-action: none;
+}
+
+.playable::before,
+.playable::after {
+  content: "";
+  position: absolute;
+  inset: auto;
+  border-radius: 999px;
+  filter: blur(2px);
+  pointer-events: none;
+  opacity: 0.82;
+}
+.playable::before {
+  width: 190px; height: 190px; right: -80px; top: 160px;
+  background: rgba(139, 92, 246, 0.22);
+}
+.playable::after {
+  width: 160px; height: 160px; left: -80px; bottom: 70px;
+  background: rgba(34, 211, 238, 0.12);
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 32px; height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  z-index: 30;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 2;
+  padding: 18px 22px 8px;
+  text-align: center;
+}
+
+.brand-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.hero-copy h1 {
+  margin: 10px 0 6px;
+  font-size: clamp(23px, 6vw, 30px);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+}
+.hero-copy p {
+  margin: 0 auto;
+  max-width: 330px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+  word-break: keep-all;
+}
+
+.game-card {
+  position: relative;
+  z-index: 2;
+  margin: 8px 16px 0;
+  padding: 14px 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.055));
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.30);
+  backdrop-filter: blur(12px);
+}
+
+.progress-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin: 0 2px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.80);
+}
+.progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+  overflow: hidden;
+}
+.progress-bar span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22d3ee, #a78bfa, #f472b6);
+  transition: width 260ms ease;
+}
+.progress-count b { color: #fff; }
+
+.board-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 10px 0 8px;
+}
+
+.board {
+  position: relative;
+  width: var(--board-size);
+  height: var(--board-size);
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(7, 1fr);
+  gap: 3px;
+  padding: 7px;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(4, 8, 24, 0.86), rgba(25, 20, 54, 0.86));
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.11),
+    0 18px 44px rgba(0, 0, 0, 0.28);
+}
+
+.board-cell {
+  position: relative;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.045);
+}
+
+.board-cell.target {
+  background: rgba(255,255,255,0.045);
+  border: 1.5px dashed rgba(255,255,255,0.30);
+  box-shadow: inset 0 0 0 1px rgba(139,92,246,0.15);
+}
+.board-cell.target::after {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.08);
+}
+.board-cell.target.hover {
+  border-color: rgba(34,211,238,0.8);
+  background: rgba(34,211,238,0.14);
+}
+.board-cell.filled {
+  border-color: rgba(255,255,255,0.34);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16), 0 8px 16px rgba(0,0,0,0.18);
+}
+.board-cell.filled::after { display: none; }
+.board-cell.piece-i { background: linear-gradient(135deg, #22d3ee, #3b82f6); }
+.board-cell.piece-o { background: linear-gradient(135deg, #fbbf24, #f97316); }
+.board-cell.piece-t { background: linear-gradient(135deg, #a78bfa, #ec4899); }
+.board-cell.piece-l { background: linear-gradient(135deg, #34d399, #10b981); }
+
+.board.correct-pulse { animation: correctPulse 360ms ease both; }
+.board.wrong-shake { animation: wrongShake 360ms ease both; }
+@keyframes correctPulse { 0% { transform: scale(1); } 50% { transform: scale(1.018); } 100% { transform: scale(1); } }
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(4px); }
+}
+
+.board-hint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(10, 12, 28, 0.66);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.72);
+  font-size: 12px;
+  font-weight: 800;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.board-hint.hidden { opacity: 0; transform: translate(-50%, -42%) scale(0.96); }
+
+.tray-title {
+  margin: 8px 0 8px;
+  text-align: center;
+  color: rgba(255,255,255,0.72);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.piece-tray {
+  min-height: 86px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 8px;
+  border-radius: 20px;
+  background: rgba(0,0,0,0.16);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.piece {
+  --mini-cell: 18px;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--mini-cell));
+  grid-template-rows: repeat(var(--rows), var(--mini-cell));
+  gap: 3px;
+  padding: 7px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.13);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.20);
+  cursor: grab;
+  touch-action: none;
+  transition: transform 160ms ease, opacity 160ms ease, filter 160ms ease;
+}
+.piece:active { cursor: grabbing; }
+.piece.is-hidden { opacity: 0.22; filter: grayscale(1); transform: scale(0.92); pointer-events: none; }
+.piece.is-placed { opacity: 0.28; filter: grayscale(1); transform: scale(0.9); pointer-events: none; }
+.piece-cell {
+  border-radius: 6px;
+  background: transparent;
+}
+.piece-cell.on {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), 0 5px 10px rgba(0,0,0,0.18);
+}
+.piece-i .piece-cell.on { background: linear-gradient(135deg, #22d3ee, #3b82f6); }
+.piece-o .piece-cell.on { background: linear-gradient(135deg, #fbbf24, #f97316); }
+.piece-t .piece-cell.on { background: linear-gradient(135deg, #a78bfa, #ec4899); }
+.piece-l .piece-cell.on { background: linear-gradient(135deg, #34d399, #10b981); }
+
+.drag-clone {
+  position: fixed;
+  z-index: 100;
+  pointer-events: none;
+  transform: scale(1.18);
+  filter: drop-shadow(0 22px 28px rgba(0,0,0,0.35));
+}
+.drag-clone .piece-cell.on { animation: dragBlink 780ms ease-in-out infinite alternate; }
+@keyframes dragBlink { from { filter: brightness(1); } to { filter: brightness(1.18); } }
+
+.hand-cue {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  right: 16px;
+  bottom: 104px;
+  z-index: 4;
+  pointer-events: none;
+  animation: handMove 1550ms ease-in-out infinite;
+  opacity: 0.94;
+}
+.hand-cue::before {
+  content: "☝️";
+  position: absolute;
+  font-size: 38px;
+  transform: rotate(-20deg);
+}
+.hand-cue::after {
+  content: "";
+  position: absolute;
+  left: 8px; top: 8px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.55);
+  animation: ripple 1550ms ease-in-out infinite;
+}
+@keyframes handMove { 0%, 100% { transform: translate(0,0); } 55% { transform: translate(-56px,-42px); } }
+@keyframes ripple { 0%, 30% { opacity: 0; transform: scale(0.5); } 55% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.7); } }
+.hand-cue.hidden { display: none; }
+
+.result-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(5, 8, 20, 0.72);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 260ms ease, visibility 260ms ease;
+}
+.result-panel.is-visible { opacity: 1; visibility: visible; }
+.result-glow {
+  position: absolute;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,0.48), transparent 62%);
+  animation: glowPulse 1600ms ease-in-out infinite alternate;
+}
+@keyframes glowPulse { from { transform: scale(0.94); opacity: 0.75; } to { transform: scale(1.08); opacity: 1; } }
+.result-card {
+  position: relative;
+  width: min(100%, 340px);
+  padding: 28px 22px 20px;
+  border-radius: 30px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.17), rgba(255,255,255,0.09));
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 30px 70px rgba(0,0,0,0.42);
+}
+.reward-icon {
+  width: 72px; height: 72px;
+  margin: 0 auto 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #fbbf24, #f472b6, #8b5cf6);
+  box-shadow: 0 16px 36px rgba(139,92,246,0.38);
+  font-size: 38px;
+}
+.result-card h2 {
+  margin: 0 0 8px;
+  font-size: 29px;
+  letter-spacing: -0.04em;
+}
+.result-card p {
+  margin: 0 auto 18px;
+  max-width: 270px;
+  color: rgba(255,255,255,0.76);
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+.cta-button,
+.replay-button {
+  width: 100%;
+  border: 0;
+  border-radius: 18px;
+  cursor: pointer;
+}
+.cta-button {
+  height: 54px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  box-shadow: 0 16px 28px rgba(139,92,246,0.35);
+}
+.replay-button {
+  height: 42px;
+  margin-top: 8px;
+  color: rgba(255,255,255,0.78);
+  background: rgba(255,255,255,0.10);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+@media (max-height: 650px) {
+  :root { --board-size: min(66vw, 254px); }
+  .hero-copy { padding-top: 12px; }
+  .hero-copy h1 { font-size: 22px; margin-top: 7px; }
+  .hero-copy p { font-size: 12px; }
+  .game-card { margin-top: 4px; padding: 11px 12px 12px; border-radius: 22px; }
+  .piece-tray { min-height: 72px; padding: 8px 6px; gap: 6px; }
+  .piece { --mini-cell: 15px; padding: 6px; gap: 2px; }
+  .board { gap: 2px; padding: 6px; border-radius: 18px; }
+  .tray-title { margin: 4px 0 5px; }
+}
+
+</style>
+</head>
+<body>
+  <main class="playable" id="playable" aria-label="테트리스형 모양 맞추기 플레이어블 광고">
+    <button class="close-btn" type="button" aria-label="닫기">×</button>
+
+    <section class="hero-copy" aria-live="polite">
+      <div class="brand-pill">MAGENT PLAYABLE</div>
+      <h1 id="headline">블록을 맞춰 보상을 완성하세요</h1>
+      <p id="subheadline">아래 블록을 끌어 같은 모양의 빈칸에 놓아보세요.</p>
+    </section>
+
+    <section class="game-card" aria-label="모양 맞추기 게임 영역">
+      <div class="progress-row">
+        <span class="progress-label">완성도</span>
+        <div class="progress-bar" aria-hidden="true"><span id="progressFill"></span></div>
+        <span class="progress-count"><b id="placedCount">0</b>/4</span>
+      </div>
+
+      <div class="board-wrap">
+        <div id="board" class="board" aria-label="블록을 놓는 보드"></div>
+        <div id="boardHint" class="board-hint">같은 실루엣에 놓기</div>
+      </div>
+
+      <div class="tray-title">블록을 드래그하세요</div>
+      <div id="tray" class="piece-tray" aria-label="드래그 가능한 블록 목록"></div>
+    </section>
+
+    <section id="resultPanel" class="result-panel" aria-hidden="true">
+      <div class="result-glow"></div>
+      <div class="result-card">
+        <div class="reward-icon" aria-hidden="true">🎁</div>
+        <h2 id="resultTitle">퍼즐 완성!</h2>
+        <p id="resultDesc">모든 블록을 맞췄습니다. 실제 게임에서 더 많은 보상을 확인해보세요.</p>
+        <button id="ctaButton" class="cta-button" type="button">지금 플레이하기</button>
+        <button id="replayButton" class="replay-button" type="button">다시 맞추기</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+(function () {
+  'use strict';
+
+  var CONFIG = {
+    landingUrl: 'https://example.com',
+    headline: '블록을 맞춰 보상을 완성하세요',
+    subheadline: '아래 블록을 끌어 같은 모양의 빈칸에 놓아보세요.',
+    resultTitle: '모양 맞추기 성공!',
+    resultDesc: '모든 블록이 딱 맞았습니다. 실제 게임에서 더 많은 스테이지와 보상을 확인해보세요.',
+    ctaText: '지금 플레이하기',
+    rows: 7,
+    cols: 7,
+    snapToleranceCells: 1.1,
+    pieces: [
+      {
+        id: 'i',
+        name: '일자 블록',
+        className: 'piece-i',
+        target: { row: 0, col: 3 },
+        shape: [[1, 1, 1, 1]]
+      },
+      {
+        id: 'o',
+        name: '네모 블록',
+        className: 'piece-o',
+        target: { row: 0, col: 0 },
+        shape: [[1, 1], [1, 1]]
+      },
+      {
+        id: 't',
+        name: 'T 블록',
+        className: 'piece-t',
+        target: { row: 2, col: 3 },
+        shape: [[1, 1, 1], [0, 1, 0]]
+      },
+      {
+        id: 'l',
+        name: 'L 블록',
+        className: 'piece-l',
+        target: { row: 4, col: 0 },
+        shape: [[1, 0], [1, 0], [1, 1]]
+      }
+    ]
+  };
+
+  var state = {
+    placed: {},
+    started: false,
+    drag: null,
+    boardCells: []
+  };
+
+  var els = {};
+
+  document.addEventListener('DOMContentLoaded', init);
+
+  function init() {
+    els.playable = document.getElementById('playable');
+    els.headline = document.getElementById('headline');
+    els.subheadline = document.getElementById('subheadline');
+    els.board = document.getElementById('board');
+    els.tray = document.getElementById('tray');
+    els.boardHint = document.getElementById('boardHint');
+    els.progressFill = document.getElementById('progressFill');
+    els.placedCount = document.getElementById('placedCount');
+    els.resultPanel = document.getElementById('resultPanel');
+    els.resultTitle = document.getElementById('resultTitle');
+    els.resultDesc = document.getElementById('resultDesc');
+    els.ctaButton = document.getElementById('ctaButton');
+    els.replayButton = document.getElementById('replayButton');
+
+    els.headline.textContent = CONFIG.headline;
+    els.subheadline.textContent = CONFIG.subheadline;
+    els.resultTitle.textContent = CONFIG.resultTitle;
+    els.resultDesc.textContent = CONFIG.resultDesc;
+    els.ctaButton.textContent = CONFIG.ctaText;
+
+    renderBoard();
+    renderTray();
+    updateProgress();
+
+    els.ctaButton.addEventListener('click', function () {
+      track('cta_click', { placed: getPlacedCount() });
+      openLanding();
+    });
+
+    els.replayButton.addEventListener('click', resetGame);
+
+    var close = document.querySelector('.close-btn');
+    if (close) {
+      close.addEventListener('click', function () {
+        track('close_click');
+        openLanding();
+      });
+    }
+
+    addHandCue();
+    track('creative_view');
+  }
+
+  function renderBoard() {
+    els.board.innerHTML = '';
+    state.boardCells = [];
+
+    for (var r = 0; r < CONFIG.rows; r++) {
+      for (var c = 0; c < CONFIG.cols; c++) {
+        var cell = document.createElement('div');
+        cell.className = 'board-cell';
+        cell.dataset.row = String(r);
+        cell.dataset.col = String(c);
+        els.board.appendChild(cell);
+        state.boardCells.push(cell);
+      }
+    }
+
+    CONFIG.pieces.forEach(function (piece) {
+      forEachShapeCell(piece, function (row, col) {
+        var cell = getCell(piece.target.row + row, piece.target.col + col);
+        if (cell) {
+          cell.classList.add('target');
+          cell.dataset.targetPiece = piece.id;
+        }
+      });
+    });
+  }
+
+  function renderTray() {
+    els.tray.innerHTML = '';
+    CONFIG.pieces.forEach(function (piece) {
+      els.tray.appendChild(createPieceElement(piece));
+    });
+  }
+
+  function createPieceElement(piece) {
+    var rows = piece.shape.length;
+    var cols = piece.shape[0].length;
+    var pieceEl = document.createElement('div');
+    pieceEl.className = 'piece ' + piece.className;
+    pieceEl.dataset.pieceId = piece.id;
+    pieceEl.setAttribute('role', 'button');
+    pieceEl.setAttribute('aria-label', piece.name + ' 드래그');
+    pieceEl.style.setProperty('--rows', String(rows));
+    pieceEl.style.setProperty('--cols', String(cols));
+
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var cell = document.createElement('div');
+        cell.className = 'piece-cell' + (piece.shape[r][c] ? ' on' : '');
+        pieceEl.appendChild(cell);
+      }
+    }
+
+    pieceEl.addEventListener('pointerdown', onPointerDown);
+    return pieceEl;
+  }
+
+  function addHandCue() {
+    var hand = document.createElement('div');
+    hand.className = 'hand-cue';
+    hand.setAttribute('aria-hidden', 'true');
+    els.playable.appendChild(hand);
+    els.handCue = hand;
+  }
+
+  function onPointerDown(e) {
+    var source = e.currentTarget;
+    var piece = getPiece(source.dataset.pieceId);
+    if (!piece || state.placed[piece.id]) return;
+
+    if (!state.started) {
+      state.started = true;
+      track('first_interaction', { type: 'drag_start', piece: piece.id });
+    }
+    track('drag_start', { piece: piece.id });
+
+    if (els.handCue) els.handCue.classList.add('hidden');
+    if (els.boardHint) els.boardHint.classList.add('hidden');
+
+    var rect = source.getBoundingClientRect();
+    var clone = source.cloneNode(true);
+    clone.classList.add('drag-clone');
+    clone.style.left = rect.left + 'px';
+    clone.style.top = rect.top + 'px';
+    clone.style.width = rect.width + 'px';
+    clone.style.height = rect.height + 'px';
+    document.body.appendChild(clone);
+
+    source.classList.add('is-hidden');
+
+    state.drag = {
+      piece: piece,
+      source: source,
+      clone: clone,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+      width: rect.width,
+      height: rect.height
+    };
+
+    try { source.setPointerCapture(e.pointerId); } catch (err) {}
+    moveClone(e.clientX, e.clientY);
+
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp, { passive: false });
+    window.addEventListener('pointercancel', onPointerCancel, { passive: false });
+  }
+
+  function onPointerMove(e) {
+    if (!state.drag) return;
+    e.preventDefault();
+    moveClone(e.clientX, e.clientY);
+    previewTarget(e.clientX, e.clientY);
+  }
+
+  function onPointerUp(e) {
+    if (!state.drag) return;
+    e.preventDefault();
+
+    clearHover();
+    var dropped = tryDrop(e.clientX, e.clientY);
+    if (!dropped) {
+      rejectDrop();
+    }
+    cleanupDrag();
+
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerCancel);
+  }
+
+  function onPointerCancel() {
+    if (!state.drag) return;
+    clearHover();
+    rejectDrop();
+    cleanupDrag();
+  }
+
+  function moveClone(clientX, clientY) {
+    var d = state.drag;
+    d.clone.style.left = (clientX - d.offsetX) + 'px';
+    d.clone.style.top = (clientY - d.offsetY) + 'px';
+  }
+
+  function previewTarget(clientX, clientY) {
+    clearHover();
+    var d = state.drag;
+    var match = getDropMatch(d.piece, clientX, clientY);
+    if (!match) return;
+    forEachShapeCell(d.piece, function (r, c) {
+      var cell = getCell(d.piece.target.row + r, d.piece.target.col + c);
+      if (cell) cell.classList.add('hover');
+    });
+  }
+
+  function getDropMatch(piece, clientX, clientY) {
+    var boardRect = els.board.getBoundingClientRect();
+    var cellOuter = boardRect.width / CONFIG.cols;
+
+    var targetLeft = boardRect.left + piece.target.col * cellOuter;
+    var targetTop = boardRect.top + piece.target.row * cellOuter;
+    var topLeftX = clientX - state.drag.offsetX;
+    var topLeftY = clientY - state.drag.offsetY;
+
+    var distance = Math.hypot(topLeftX - targetLeft, topLeftY - targetTop);
+    var withinDistance = distance <= cellOuter * CONFIG.snapToleranceCells;
+
+    var targetBox = getPieceTargetBox(piece, boardRect, cellOuter);
+    var insideTargetBox = clientX >= targetBox.left - cellOuter * 0.5 &&
+      clientX <= targetBox.right + cellOuter * 0.5 &&
+      clientY >= targetBox.top - cellOuter * 0.5 &&
+      clientY <= targetBox.bottom + cellOuter * 0.5;
+
+    return withinDistance || insideTargetBox;
+  }
+
+  function getPieceTargetBox(piece, boardRect, cellOuter) {
+    var minR = Infinity, maxR = -Infinity, minC = Infinity, maxC = -Infinity;
+    forEachShapeCell(piece, function (r, c) {
+      minR = Math.min(minR, r); maxR = Math.max(maxR, r);
+      minC = Math.min(minC, c); maxC = Math.max(maxC, c);
+    });
+    return {
+      left: boardRect.left + (piece.target.col + minC) * cellOuter,
+      top: boardRect.top + (piece.target.row + minR) * cellOuter,
+      right: boardRect.left + (piece.target.col + maxC + 1) * cellOuter,
+      bottom: boardRect.top + (piece.target.row + maxR + 1) * cellOuter
+    };
+  }
+
+  function tryDrop(clientX, clientY) {
+    var piece = state.drag.piece;
+    var ok = getDropMatch(piece, clientX, clientY);
+    if (!ok) return false;
+
+    placePiece(piece);
+    state.drag.source.classList.remove('is-hidden');
+    state.drag.source.classList.add('is-placed');
+    state.placed[piece.id] = true;
+    track('piece_placed', { piece: piece.id, count: getPlacedCount() });
+    updateProgress();
+    pulseBoard('correct-pulse');
+
+    if (isComplete()) {
+      setTimeout(showResult, 360);
+    }
+    return true;
+  }
+
+  function placePiece(piece) {
+    forEachShapeCell(piece, function (r, c) {
+      var cell = getCell(piece.target.row + r, piece.target.col + c);
+      if (cell) {
+        cell.classList.remove('target', 'hover');
+        cell.classList.add('filled', piece.className);
+      }
+    });
+  }
+
+  function rejectDrop() {
+    if (!state.drag) return;
+    var source = state.drag.source;
+    source.classList.remove('is-hidden');
+    pulseBoard('wrong-shake');
+    track('wrong_drop', { piece: state.drag.piece.id });
+  }
+
+  function cleanupDrag() {
+    if (!state.drag) return;
+    if (state.drag.clone && state.drag.clone.parentNode) {
+      state.drag.clone.parentNode.removeChild(state.drag.clone);
+    }
+    state.drag = null;
+  }
+
+  function resetGame() {
+    state.placed = {};
+    state.started = false;
+    els.resultPanel.classList.remove('is-visible');
+    els.resultPanel.setAttribute('aria-hidden', 'true');
+    renderBoard();
+    renderTray();
+    updateProgress();
+    if (els.boardHint) els.boardHint.classList.remove('hidden');
+    if (els.handCue) els.handCue.classList.remove('hidden');
+    track('replay_click');
+  }
+
+  function showResult() {
+    els.resultPanel.classList.add('is-visible');
+    els.resultPanel.setAttribute('aria-hidden', 'false');
+    track('complete', { placed: getPlacedCount() });
+  }
+
+  function updateProgress() {
+    var count = getPlacedCount();
+    els.placedCount.textContent = String(count);
+    els.progressFill.style.width = (count / CONFIG.pieces.length * 100) + '%';
+  }
+
+  function getPlacedCount() {
+    return Object.keys(state.placed).length;
+  }
+
+  function isComplete() {
+    return getPlacedCount() === CONFIG.pieces.length;
+  }
+
+  function getPiece(id) {
+    for (var i = 0; i < CONFIG.pieces.length; i++) {
+      if (CONFIG.pieces[i].id === id) return CONFIG.pieces[i];
+    }
+    return null;
+  }
+
+  function getCell(row, col) {
+    if (row < 0 || col < 0 || row >= CONFIG.rows || col >= CONFIG.cols) return null;
+    return state.boardCells[row * CONFIG.cols + col];
+  }
+
+  function forEachShapeCell(piece, fn) {
+    for (var r = 0; r < piece.shape.length; r++) {
+      for (var c = 0; c < piece.shape[r].length; c++) {
+        if (piece.shape[r][c]) fn(r, c);
+      }
+    }
+  }
+
+  function clearHover() {
+    state.boardCells.forEach(function (cell) { cell.classList.remove('hover'); });
+  }
+
+  function pulseBoard(className) {
+    els.board.classList.remove('correct-pulse', 'wrong-shake');
+    void els.board.offsetWidth;
+    els.board.classList.add(className);
+    window.setTimeout(function () { els.board.classList.remove(className); }, 420);
+  }
+
+  function getLandingUrl() {
+    var params = new URLSearchParams(window.location.search);
+    return params.get('clickTag') || params.get('clickTAG') || params.get('landing') || window.clickTag || window.clickTAG || CONFIG.landingUrl;
+  }
+
+  function openLanding() {
+    var url = getLandingUrl();
+    if (!url) return;
+    try {
+      if (window.mraid && typeof window.mraid.open === 'function') {
+        window.mraid.open(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch (e) {
+      window.location.href = url;
+    }
+  }
+
+  function track(eventName, payload) {
+    var detail = payload || {};
+    window.dispatchEvent(new CustomEvent('magentPlayableEvent', {
+      detail: { name: eventName, payload: detail, ts: Date.now() }
+    }));
+    if (window.MAGENT_DEBUG) {
+      console.log('[MagentPlayable]', eventName, detail);
+    }
+  }
+})();
+
+</script>
+</body>
+</html>

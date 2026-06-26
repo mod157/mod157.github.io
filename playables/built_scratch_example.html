@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="ad.size" content="width=320,height=480" />
+  <title>Scratch &amp; Win End Card</title>
+  <style>
+:root {
+  --paper: #f7eddc;
+  --paper-2: #ebe0c8;
+  --ink: #1c1810;
+  --ink-soft: #5a4f3c;
+  --gold: #b08940;
+  --gold-deep: #8a6920;
+  --red: #b91c1c;
+  --green: #15803d;
+  --shadow: rgba(28, 24, 16, 0.18);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; min-height: 100%; background: #1c1810; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif; }
+body { display: grid; place-items: center; overflow: hidden; color: var(--ink); }
+button { font: inherit; }
+
+.endcard {
+  position: relative;
+  width: min(100vw, 430px);
+  height: min(100vh, 760px);
+  min-height: 560px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 30% at 50% 0%, rgba(176, 137, 64, 0.10), transparent 50%),
+    linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  user-select: none;
+  touch-action: none;
+}
+
+.endcard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(45deg, transparent 0 12px, rgba(176, 137, 64, 0.04) 12px 13px),
+    repeating-linear-gradient(-45deg, transparent 0 12px, rgba(176, 137, 64, 0.04) 12px 13px);
+  pointer-events: none;
+}
+
+.close-btn {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 30px; height: 30px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1;
+  z-index: 30;
+  cursor: pointer;
+}
+
+.head {
+  position: relative;
+  z-index: 2;
+  padding: 28px 24px 6px;
+  text-align: center;
+}
+
+.head-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 280px;
+  margin: 0 auto 14px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--gold-deep);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.head h1 {
+  margin: 8px 0 6px;
+  font-size: clamp(23px, 6.4vw, 28px);
+  letter-spacing: -0.03em;
+  line-height: 1.16;
+  font-weight: 900;
+}
+.head p {
+  margin: 0 auto;
+  max-width: 300px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.ticket {
+  position: relative;
+  z-index: 2;
+  margin: 22px auto 0;
+  width: min(86%, 320px);
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 6px 6px 0 var(--ink), 6px 6px 0 4px var(--gold);
+}
+.ticket-inner {
+  border: 1.5px dashed var(--ink);
+  padding: 16px 14px 14px;
+  position: relative;
+}
+
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--gold-deep);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+.ticket-header .serial {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  letter-spacing: 0;
+}
+
+.reveal-stage {
+  position: relative;
+  height: 158px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.reveal-back {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 8px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 235, 200, 0.5), transparent 70%),
+    repeating-linear-gradient(0deg, rgba(255, 230, 200, 0.55) 0 6px, rgba(176, 137, 64, 0.08) 6px 7px);
+}
+.reveal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.reveal-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--gold-deep);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.reveal-amount {
+  font-size: 38px;
+  font-weight: 900;
+  color: var(--red);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.reveal-sub {
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.reveal-canvas {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+  touch-action: none;
+  transition: opacity 380ms ease;
+}
+.reveal-canvas.fade-out { opacity: 0; pointer-events: none; }
+.reveal-canvas:active { cursor: grabbing; }
+
+.scratch-overlay-text {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  color: rgba(28, 24, 16, 0.4);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  z-index: 3;
+  text-align: center;
+  transition: opacity 300ms ease;
+}
+.scratch-overlay-text small {
+  display: block;
+  margin-top: 6px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+}
+.scratch-overlay-text.fade-out { opacity: 0; }
+
+.progress {
+  position: relative;
+  height: 4px;
+  background: rgba(28, 24, 16, 0.12);
+  border-radius: 2px;
+  margin: 14px 2px 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, var(--gold), var(--red));
+  border-radius: 2px;
+  transition: width 220ms ease;
+}
+
+.ticket-footer {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1.5px dashed var(--ink);
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--ink-soft);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.cta-area {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 20px;
+  z-index: 4;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 400ms ease, transform 400ms cubic-bezier(0.2, 0.7, 0.3, 1.0);
+  pointer-events: none;
+}
+.cta-area.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.cta-message {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.cta-message strong {
+  display: block;
+  font-size: 16px;
+  color: var(--ink);
+  font-weight: 900;
+  margin-bottom: 2px;
+}
+.cta-message span {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+.cta-button {
+  width: 100%;
+  height: 52px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  position: relative;
+  letter-spacing: 0.02em;
+  box-shadow: 4px 4px 0 var(--gold);
+}
+.cta-button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--gold); }
+.replay-button {
+  margin-top: 8px;
+  width: 100%;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  letter-spacing: 0.04em;
+}
+
+.confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 50;
+}
+.confetti span {
+  position: absolute;
+  width: 6px;
+  height: 12px;
+  top: 30%;
+  border-radius: 1px;
+  animation: confettiBurst 1500ms ease-out forwards;
+}
+@keyframes confettiBurst {
+  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(720deg); opacity: 0; }
+}
+
+@media (max-height: 650px) {
+  .head { padding-top: 16px; }
+  .head h1 { font-size: 22px; }
+  .head p { font-size: 12px; }
+  .ticket { margin-top: 12px; }
+  .reveal-stage { height: 130px; }
+  .reveal-amount { font-size: 30px; }
+  .cta-button { height: 46px; font-size: 15px; }
+  .cta-area { bottom: 12px; }
+}
+
+</style>
+</head>
+<body>
+  <main class="endcard" id="endcard" aria-label="스크래치 복권 엔드 카드">
+    <button class="close-btn" type="button" aria-label="닫기">×</button>
+
+    <section class="head" aria-live="polite">
+      <div class="head-meta">
+        <span>INSTANT WIN</span>
+        <span>NO. 7</span>
+      </div>
+      <h1 id="headline">오늘의 즉석 복권</h1>
+      <p id="subheadline">회색 면을 손가락으로 긁어보세요. 행운이 안에 들어있어요.</p>
+    </section>
+
+    <div class="ticket" aria-label="복권 카드">
+      <div class="ticket-inner">
+        <div class="ticket-header">
+          <span>LUCKY TICKET</span>
+          <span class="serial" id="serial">2026-0625-0007</span>
+        </div>
+
+        <div class="reveal-stage">
+          <div class="reveal-back">
+            <div class="reveal-content">
+              <span class="reveal-label" id="revealLabel">당첨</span>
+              <span class="reveal-amount" id="revealAmount">30,000원</span>
+              <span class="reveal-sub" id="revealSub">신규 가입 시 즉시 적립</span>
+            </div>
+          </div>
+          <canvas class="reveal-canvas" id="scratchCanvas" width="280" height="158"></canvas>
+          <div class="scratch-overlay-text" id="overlayText">
+            <span><span id="overlayLabel">SCRATCH HERE</span><small id="overlaySub">손가락으로 긁어 주세요</small></span>
+          </div>
+        </div>
+
+        <div class="progress" aria-label="긁기 진행 상태">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="ticket-footer">
+          <span>MAGENT LUCKY</span>
+          <span>VOID IF REVEALED</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-area" id="ctaArea" aria-hidden="true">
+      <div class="cta-message">
+        <strong id="ctaTitle">복권이 당신을 기다리고 있어요</strong>
+        <span id="ctaSub">지금 가입하고 보상을 받으세요.</span>
+      </div>
+      <button id="ctaButton" class="cta-button" type="button">지금 받기</button>
+      <button id="replayButton" class="replay-button" type="button">한 장 더 받기</button>
+    </div>
+  </main>
+
+  <script type="application/json" id="creative-config">{"landingUrl":"https://example.com/cashback","headline":"신규 가입 캐시백 복권","subheadline":"회색 면을 손가락으로 긁어 캐시백 금액을 확인하세요.","overlayText":"SCRATCH","overlaySub":"손가락으로 긁어 주세요","revealLabel":"캐시백","revealAmount":"50,000원","revealSub":"신규 가입 시 24시간 내 즉시 입금","ctaTitle":"캐시백이 도착했어요","ctaSub":"가입하면 바로 받아갈 수 있어요.","ctaText":"지금 가입하기","replayText":"한 장 더 받기","serial":"2026-0625-A007","autoRevealThreshold":0.46,"brushRadius":22,"theme":{"paper":"#f7eddc","ink":"#1c1810","gold":"#b08940","red":"#b91c1c"}}</script>
+  <script>
+(function () {
+  'use strict';
+
+  var DEFAULT_CONFIG = {
+    landingUrl: 'https://example.com',
+    headline: '오늘의 즉석 복권',
+    subheadline: '회색 면을 손가락으로 긁어보세요. 행운이 안에 들어있어요.',
+    overlayText: 'SCRATCH HERE',
+    overlaySub: '손가락으로 긁어 주세요',
+    revealLabel: '당첨',
+    revealAmount: '30,000원',
+    revealSub: '신규 가입 시 즉시 적립',
+    ctaTitle: '복권이 당신을 기다리고 있어요',
+    ctaSub: '지금 가입하고 보상을 받으세요.',
+    ctaText: '지금 받기',
+    replayText: '한 장 더 받기',
+    serial: '2026-0625-0007',
+    autoRevealThreshold: 0.46,
+    brushRadius: 22,
+    theme: null
+  };
+
+  var CONFIG = loadCreativeConfig(DEFAULT_CONFIG);
+
+  var state = {
+    canvas: null,
+    ctx: null,
+    drawing: false,
+    started: false,
+    revealed: false,
+    lastX: 0,
+    lastY: 0,
+    sampleTimer: null
+  };
+
+  var els = {};
+
+  document.addEventListener('DOMContentLoaded', function () {
+    applyTheme(CONFIG.theme);
+    init();
+  });
+
+  function loadCreativeConfig(defaults) {
+    try {
+      var el = document.getElementById('creative-config');
+      if (el && el.textContent && el.textContent.trim()) {
+        return deepMerge(defaults, JSON.parse(el.textContent));
+      }
+    } catch (e) {
+      if (window.console) console.warn('[creative-config] parse failed:', e);
+    }
+    return defaults;
+  }
+
+  function deepMerge(a, b) {
+    if (Array.isArray(b)) return b.slice();
+    if (b === null || typeof b !== 'object') return b;
+    var out = (a && typeof a === 'object' && !Array.isArray(a)) ? Object.assign({}, a) : {};
+    Object.keys(b).forEach(function (k) {
+      var bv = b[k];
+      if (bv !== null && typeof bv === 'object' && !Array.isArray(bv)) {
+        out[k] = deepMerge(out[k] || {}, bv);
+      } else if (Array.isArray(bv)) {
+        out[k] = bv.slice();
+      } else {
+        out[k] = bv;
+      }
+    });
+    return out;
+  }
+
+  function applyTheme(theme) {
+    if (!theme) return;
+    var root = document.documentElement;
+    Object.keys(theme).forEach(function (k) {
+      root.style.setProperty('--' + k, theme[k]);
+    });
+  }
+
+  function init() {
+    els.endcard = document.getElementById('endcard');
+    els.headline = document.getElementById('headline');
+    els.subheadline = document.getElementById('subheadline');
+    els.serial = document.getElementById('serial');
+    els.revealLabel = document.getElementById('revealLabel');
+    els.revealAmount = document.getElementById('revealAmount');
+    els.revealSub = document.getElementById('revealSub');
+    els.canvas = document.getElementById('scratchCanvas');
+    els.overlayText = document.getElementById('overlayText');
+    els.progressFill = document.getElementById('progressFill');
+    els.ctaArea = document.getElementById('ctaArea');
+    els.ctaTitle = document.getElementById('ctaTitle');
+    els.ctaSub = document.getElementById('ctaSub');
+    els.ctaButton = document.getElementById('ctaButton');
+    els.replayButton = document.getElementById('replayButton');
+
+    els.headline.textContent = CONFIG.headline;
+    els.subheadline.textContent = CONFIG.subheadline;
+    els.serial.textContent = CONFIG.serial;
+    els.revealLabel.textContent = CONFIG.revealLabel;
+    els.revealAmount.textContent = CONFIG.revealAmount;
+    els.revealSub.textContent = CONFIG.revealSub;
+    els.ctaTitle.textContent = CONFIG.ctaTitle;
+    els.ctaSub.textContent = CONFIG.ctaSub;
+    els.ctaButton.textContent = CONFIG.ctaText;
+    els.replayButton.textContent = CONFIG.replayText;
+
+    document.getElementById('overlayLabel').textContent = CONFIG.overlayText;
+    document.getElementById('overlaySub').textContent = CONFIG.overlaySub;
+
+    state.canvas = els.canvas;
+    state.ctx = els.canvas.getContext('2d');
+
+    setupCanvas();
+    bindScratch();
+
+    els.ctaButton.addEventListener('click', function () {
+      track('cta_click');
+      openLanding();
+    });
+    els.replayButton.addEventListener('click', resetGame);
+
+    var close = document.querySelector('.close-btn');
+    if (close) {
+      close.addEventListener('click', function () {
+        track('close_click');
+        openLanding();
+      });
+    }
+
+    window.addEventListener('resize', onResize);
+    track('creative_view');
+  }
+
+  function setupCanvas() {
+    var rect = els.canvas.getBoundingClientRect();
+    var dpr = window.devicePixelRatio || 1;
+    els.canvas.width = Math.floor(rect.width * dpr);
+    els.canvas.height = Math.floor(rect.height * dpr);
+    els.canvas.style.width = rect.width + 'px';
+    els.canvas.style.height = rect.height + 'px';
+    var ctx = state.ctx;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawCoating(ctx, rect.width, rect.height);
+  }
+
+  function drawCoating(ctx, w, h) {
+    var grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, '#9ca3af');
+    grad.addColorStop(0.5, '#cbd5e1');
+    grad.addColorStop(1, '#94a3b8');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.20)';
+    for (var i = 0; i < 120; i++) {
+      ctx.beginPath();
+      ctx.arc(Math.random() * w, Math.random() * h, 1 + Math.random() * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(20, 20, 30, 0.10)';
+    for (var i = 0; i < 80; i++) {
+      ctx.beginPath();
+      ctx.arc(Math.random() * w, Math.random() * h, 0.5 + Math.random(), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function onResize() {
+    if (state.revealed) return;
+    setupCanvas();
+  }
+
+  function bindScratch() {
+    els.canvas.addEventListener('pointerdown', onScratchDown);
+  }
+
+  function onScratchDown(e) {
+    if (state.revealed) return;
+    if (!state.started) {
+      state.started = true;
+      track('first_interaction');
+    }
+    state.drawing = true;
+    var rect = els.canvas.getBoundingClientRect();
+    state.lastX = e.clientX - rect.left;
+    state.lastY = e.clientY - rect.top;
+    scratchAt(state.lastX, state.lastY);
+    try { els.canvas.setPointerCapture(e.pointerId); } catch (err) {}
+    els.canvas.addEventListener('pointermove', onScratchMove, { passive: false });
+    els.canvas.addEventListener('pointerup', onScratchUp);
+    els.canvas.addEventListener('pointercancel', onScratchUp);
+    els.overlayText.classList.add('fade-out');
+    if (!state.sampleTimer) {
+      state.sampleTimer = setInterval(checkProgress, 320);
+    }
+  }
+
+  function onScratchMove(e) {
+    if (!state.drawing || state.revealed) return;
+    e.preventDefault();
+    var rect = els.canvas.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+    scratchLine(state.lastX, state.lastY, x, y);
+    state.lastX = x;
+    state.lastY = y;
+  }
+
+  function onScratchUp() {
+    state.drawing = false;
+    els.canvas.removeEventListener('pointermove', onScratchMove);
+    els.canvas.removeEventListener('pointerup', onScratchUp);
+    els.canvas.removeEventListener('pointercancel', onScratchUp);
+  }
+
+  function scratchAt(x, y) {
+    var ctx = state.ctx;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(x, y, CONFIG.brushRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function scratchLine(x1, y1, x2, y2) {
+    var ctx = state.ctx;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = CONFIG.brushRadius * 2;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function checkProgress() {
+    if (state.revealed) return;
+    var ratio = sampleScratchRatio();
+    els.progressFill.style.width = Math.min(100, ratio * 100 / CONFIG.autoRevealThreshold) + '%';
+    if (ratio >= CONFIG.autoRevealThreshold) {
+      reveal();
+    }
+  }
+
+  function sampleScratchRatio() {
+    var w = els.canvas.width;
+    var h = els.canvas.height;
+    if (w === 0 || h === 0) return 0;
+    var sampleSize = 24;
+    var data = state.ctx.getImageData(0, 0, w, h).data;
+    var step = Math.floor(data.length / 4 / (sampleSize * sampleSize)) * 4;
+    if (step < 4) step = 4;
+    var cleared = 0;
+    var checked = 0;
+    for (var i = 3; i < data.length; i += step) {
+      checked++;
+      if (data[i] < 50) cleared++;
+    }
+    return checked > 0 ? cleared / checked : 0;
+  }
+
+  function reveal() {
+    if (state.revealed) return;
+    state.revealed = true;
+    if (state.sampleTimer) clearInterval(state.sampleTimer);
+    state.sampleTimer = null;
+    track('reveal_complete');
+
+    els.canvas.classList.add('fade-out');
+    els.overlayText.classList.add('fade-out');
+    els.progressFill.style.width = '100%';
+
+    setTimeout(function () {
+      els.ctaArea.classList.add('is-visible');
+      launchConfetti();
+    }, 400);
+  }
+
+  function launchConfetti() {
+    var container = document.createElement('div');
+    container.className = 'confetti';
+    var colors = ['#b91c1c', '#fbbf24', '#15803d', '#b08940', '#1c1810'];
+    for (var i = 0; i < 30; i++) {
+      var s = document.createElement('span');
+      s.style.left = (40 + Math.random() * 20) + '%';
+      s.style.background = colors[Math.floor(Math.random() * colors.length)];
+      var ang = (Math.random() - 0.5) * Math.PI;
+      var dist = 140 + Math.random() * 180;
+      s.style.setProperty('--dx', (Math.cos(ang) * dist) + 'px');
+      s.style.setProperty('--dy', (-80 - Math.random() * 200) + 'px');
+      s.style.animationDelay = (Math.random() * 200) + 'ms';
+      container.appendChild(s);
+    }
+    els.endcard.appendChild(container);
+    setTimeout(function () { if (container.parentNode) container.parentNode.removeChild(container); }, 2200);
+  }
+
+  function resetGame() {
+    state.drawing = false;
+    state.started = false;
+    state.revealed = false;
+    if (state.sampleTimer) { clearInterval(state.sampleTimer); state.sampleTimer = null; }
+    els.canvas.classList.remove('fade-out');
+    els.overlayText.classList.remove('fade-out');
+    els.ctaArea.classList.remove('is-visible');
+    els.progressFill.style.width = '0%';
+    setupCanvas();
+    track('replay_click');
+  }
+
+  function getLandingUrl() {
+    var params = new URLSearchParams(window.location.search);
+    return params.get('clickTag') || params.get('clickTAG') || params.get('landing') || window.clickTag || window.clickTAG || CONFIG.landingUrl;
+  }
+
+  function openLanding() {
+    var url = getLandingUrl();
+    if (!url) return;
+    try {
+      if (window.mraid && typeof window.mraid.open === 'function') {
+        window.mraid.open(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch (e) {
+      window.location.href = url;
+    }
+  }
+
+  function track(eventName, payload) {
+    var detail = payload || {};
+    window.dispatchEvent(new CustomEvent('magentPlayableEvent', {
+      detail: { name: eventName, payload: detail, ts: Date.now() }
+    }));
+    if (window.MAGENT_DEBUG) console.log('[MagentScratch]', eventName, detail);
+  }
+})();
+
+</script>
+</body>
+</html>

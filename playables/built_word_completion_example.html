@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="ad.size" content="width=320,height=480" />
+  <title>Word Completion Playable</title>
+  <style>
+:root {
+  --paper: #fefaf3;
+  --paper-2: #f9f1e0;
+  --ink: #1a1a1a;
+  --ink-soft: #4a4a4a;
+  --line: #d4c8aa;
+  --line-strong: #1a1a1a;
+  --accent: #ea580c;
+  --accent-soft: #fed7aa;
+  --good: #16a34a;
+  --bad: #dc2626;
+  --slot-w: clamp(44px, 13vw, 56px);
+  --slot-h: clamp(56px, 16vw, 70px);
+  --tray-tile-w: clamp(40px, 12vw, 52px);
+  --tray-tile-h: clamp(50px, 15vw, 64px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; min-height: 100%; background: #1a1306; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Georgia", serif; }
+body { display: grid; place-items: center; overflow: hidden; color: var(--ink); }
+button { font: inherit; }
+
+.playable {
+  position: relative;
+  width: min(100vw, 430px);
+  height: min(100vh, 760px);
+  min-height: 560px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 30% at 50% 0%, rgba(234, 88, 12, 0.05), transparent 60%),
+    radial-gradient(ellipse 80% 30% at 50% 100%, rgba(234, 88, 12, 0.05), transparent 60%),
+    linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  user-select: none;
+  touch-action: none;
+}
+
+.paper-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(212, 200, 170, 0.18) 1px, transparent 1px);
+  background-size: 100% 24px;
+  z-index: 0;
+}
+
+.close-btn {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 30px; height: 30px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1;
+  z-index: 30;
+  cursor: pointer;
+}
+
+.head {
+  position: relative;
+  z-index: 2;
+  padding: 32px 24px 8px;
+  text-align: center;
+}
+
+.head-eyebrow {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: transparent;
+}
+
+.head h1 {
+  margin: 14px 0 8px;
+  font-size: clamp(22px, 6vw, 26px);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  font-weight: 900;
+}
+
+.head p {
+  margin: 0 auto;
+  max-width: 320px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.progress {
+  position: relative;
+  z-index: 2;
+  margin: 18px auto 0;
+  width: min(80%, 280px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.progress-dot {
+  width: 26px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  transition: background 240ms ease;
+}
+.progress-dot.is-active { background: var(--ink); }
+.progress-dot.is-done { background: var(--accent); }
+
+.word-stage {
+  position: relative;
+  z-index: 2;
+  margin: 28px auto 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  padding: 0 12px;
+  min-height: var(--slot-h);
+}
+.word-stage.celebrate {
+  animation: wordPulse 600ms ease both;
+}
+@keyframes wordPulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.word-cell {
+  width: var(--slot-w);
+  height: var(--slot-h);
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  font-size: clamp(28px, 8vw, 36px);
+  font-weight: 900;
+  letter-spacing: 0;
+  color: var(--ink);
+  position: relative;
+  transition: transform 200ms ease, background 200ms ease, border-color 200ms ease;
+}
+.word-cell.filled-fixed {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.word-cell.slot {
+  background: transparent;
+  border: 2px dashed var(--line-strong);
+  color: transparent;
+}
+.word-cell.slot.hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  border-style: solid;
+}
+.word-cell.slot.filled-correct {
+  background: var(--accent-soft);
+  border: 2px solid var(--accent);
+  color: var(--ink);
+  box-shadow: 3px 3px 0 var(--accent);
+  animation: settleIn 360ms ease both;
+}
+@keyframes settleIn {
+  0% { transform: translateY(-8px) scale(1.18); }
+  60% { transform: translateY(2px) scale(0.96); }
+  100% { transform: translateY(0) scale(1); }
+}
+.word-cell.shake { animation: cellShake 380ms ease; }
+@keyframes cellShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+
+.tray-label {
+  position: relative;
+  z-index: 2;
+  margin: 24px 0 8px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--ink-soft);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.letter-tray {
+  position: relative;
+  z-index: 2;
+  margin: 0 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: 4px 4px 0 var(--ink);
+  flex-wrap: wrap;
+}
+
+.letter-tile {
+  width: var(--tray-tile-w);
+  height: var(--tray-tile-h);
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: clamp(22px, 6.5vw, 28px);
+  font-weight: 900;
+  border-radius: 6px;
+  cursor: grab;
+  touch-action: none;
+  transition: transform 180ms ease, opacity 220ms ease, background 200ms ease;
+  user-select: none;
+  position: relative;
+}
+.letter-tile::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 8px;
+  background: var(--accent);
+  z-index: -1;
+  transform: translate(3px, 3px);
+}
+.letter-tile:hover { transform: translate(-1px, -1px); }
+.letter-tile:active { cursor: grabbing; transform: translate(0, 0); }
+.letter-tile.is-used { opacity: 0.16; transform: scale(0.9); pointer-events: none; }
+.letter-tile.is-dragging { opacity: 0.2; }
+
+.drag-clone {
+  position: fixed;
+  z-index: 200;
+  pointer-events: none;
+  transform: scale(1.12) rotate(-3deg);
+  filter: drop-shadow(0 18px 22px rgba(0,0,0,0.36));
+}
+
+.bottom-zone {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 0;
+  z-index: 3;
+  padding: 16px 24px 18px;
+}
+.bottom-zone .hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
+}
+.bottom-zone .hint.hidden { opacity: 0; }
+
+.result-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(254, 250, 243, 0.96);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 280ms ease, visibility 280ms ease;
+}
+.result-overlay.is-visible { opacity: 1; visibility: visible; }
+.result-card {
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+}
+.result-stamp {
+  display: inline-block;
+  padding: 8px 22px;
+  border: 3px solid var(--accent);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  transform: rotate(-4deg);
+  margin-bottom: 14px;
+}
+.result-card h2 {
+  font-size: 28px;
+  margin: 4px 0 10px;
+  letter-spacing: -0.03em;
+  font-weight: 900;
+}
+.result-card p {
+  margin: 0 auto 22px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 280px;
+  word-break: keep-all;
+}
+.cta-button {
+  width: 100%;
+  height: 52px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  position: relative;
+  letter-spacing: 0.02em;
+}
+.cta-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: var(--accent);
+  z-index: -1;
+  transform: translate(4px, 4px);
+}
+.cta-wrapper { position: relative; }
+.replay-button {
+  margin-top: 14px;
+  width: 100%;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media (max-height: 650px) {
+  :root {
+    --slot-w: clamp(38px, 11vw, 50px);
+    --slot-h: clamp(46px, 13vw, 60px);
+    --tray-tile-w: clamp(34px, 10vw, 46px);
+    --tray-tile-h: clamp(42px, 12vw, 54px);
+  }
+  .head { padding-top: 20px; }
+  .head h1 { font-size: 20px; }
+  .head p { font-size: 12px; }
+  .word-stage { margin-top: 18px; }
+  .letter-tray { padding: 10px 8px; gap: 8px; }
+}
+
+</style>
+</head>
+<body>
+  <main class="playable" id="playable" aria-label="단어 완성 플레이어블 광고">
+    <div class="paper-grid" aria-hidden="true"></div>
+    <button class="close-btn" type="button" aria-label="닫기">×</button>
+
+    <section class="head" aria-live="polite">
+      <span class="head-eyebrow">WORD PUZZLE</span>
+      <h1 id="headline">단어를 완성하세요</h1>
+      <p id="subheadline">비어 있는 칸에 알맞은 글자를 끌어다 놓으면 단어가 살아납니다.</p>
+    </section>
+
+    <div class="progress" id="progress" aria-label="진행 상황"></div>
+
+    <section class="word-stage" id="wordStage" aria-label="단어 칸"></section>
+
+    <div class="tray-label">DRAG LETTERS</div>
+    <section class="letter-tray" id="letterTray" aria-label="글자 타일"></section>
+
+    <div class="bottom-zone">
+      <div class="hint" id="hint">빈 칸에 맞는 글자를 끌어 놓아 보세요</div>
+    </div>
+
+    <section class="result-overlay" id="resultOverlay" aria-hidden="true">
+      <div class="result-card">
+        <span class="result-stamp" id="resultStamp">완성</span>
+        <h2 id="resultTitle">세 단어 모두 완성!</h2>
+        <p id="resultDesc">더 많은 퍼즐과 보상이 게임에서 기다리고 있어요.</p>
+        <div class="cta-wrapper">
+          <button id="ctaButton" class="cta-button" type="button">지금 플레이하기</button>
+        </div>
+        <button id="replayButton" class="replay-button" type="button">처음부터 다시</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="application/json" id="creative-config">{"landingUrl":"https://example.com/wordapp","headline":"단어를 완성하세요","subheadline":"비어 있는 칸에 알맞은 글자를 끌어다 놓으세요. 3개 단어를 모두 완성하면 보상.","resultStamp":"CLEAR","resultTitle":"세 단어 모두 완성!","resultDesc":"더 어려운 퍼즐과 일일 보상이 게임에서 기다리고 있어요.","ctaText":"단어 모험 시작하기","replayText":"처음부터 다시","puzzles":[{"word":"HAPPY","blanks":[1,3],"tray":["A","P","X","I"]},{"word":"MAGIC","blanks":[1,3],"tray":["A","I","L","U"]},{"word":"STAR","blanks":[1,2],"tray":["T","A","E"]}],"theme":{"paper":"#fefaf3","ink":"#1a1a1a","accent":"#ea580c"}}</script>
+  <script>
+(function () {
+  'use strict';
+
+  var DEFAULT_CONFIG = {
+    landingUrl: 'https://example.com',
+    headline: '단어를 완성하세요',
+    subheadline: '비어 있는 칸에 알맞은 글자를 끌어다 놓으면 단어가 살아납니다.',
+    resultStamp: '완성',
+    resultTitle: '세 단어 모두 완성!',
+    resultDesc: '더 많은 퍼즐과 보상이 게임에서 기다리고 있어요.',
+    ctaText: '지금 플레이하기',
+    replayText: '처음부터 다시',
+    puzzles: [
+      { word: 'HELLO', blanks: [1, 3], tray: ['E', 'L', 'A', 'I'] },
+      { word: 'WORLD', blanks: [1, 3], tray: ['O', 'L', 'M', 'N'] },
+      { word: 'GAME',  blanks: [1, 2], tray: ['A', 'M', 'T'] }
+    ],
+    theme: null
+  };
+
+  var CONFIG = loadCreativeConfig(DEFAULT_CONFIG);
+
+  var state = {
+    puzzleIdx: 0,
+    placed: {},
+    drag: null,
+    started: false,
+    busy: false
+  };
+
+  var els = {};
+
+  document.addEventListener('DOMContentLoaded', function () {
+    applyTheme(CONFIG.theme);
+    init();
+  });
+
+  function loadCreativeConfig(defaults) {
+    try {
+      var el = document.getElementById('creative-config');
+      if (el && el.textContent && el.textContent.trim()) {
+        return deepMerge(defaults, JSON.parse(el.textContent));
+      }
+    } catch (e) {
+      if (window.console) console.warn('[creative-config] parse failed:', e);
+    }
+    return defaults;
+  }
+
+  function deepMerge(a, b) {
+    if (Array.isArray(b)) return b.slice();
+    if (b === null || typeof b !== 'object') return b;
+    var out = (a && typeof a === 'object' && !Array.isArray(a)) ? Object.assign({}, a) : {};
+    Object.keys(b).forEach(function (k) {
+      var bv = b[k];
+      if (bv !== null && typeof bv === 'object' && !Array.isArray(bv)) {
+        out[k] = deepMerge(out[k] || {}, bv);
+      } else if (Array.isArray(bv)) {
+        out[k] = bv.slice();
+      } else {
+        out[k] = bv;
+      }
+    });
+    return out;
+  }
+
+  function applyTheme(theme) {
+    if (!theme) return;
+    var root = document.documentElement;
+    Object.keys(theme).forEach(function (k) {
+      root.style.setProperty('--' + k, theme[k]);
+    });
+  }
+
+  function init() {
+    els.playable = document.getElementById('playable');
+    els.headline = document.getElementById('headline');
+    els.subheadline = document.getElementById('subheadline');
+    els.progress = document.getElementById('progress');
+    els.wordStage = document.getElementById('wordStage');
+    els.tray = document.getElementById('letterTray');
+    els.hint = document.getElementById('hint');
+    els.resultOverlay = document.getElementById('resultOverlay');
+    els.resultStamp = document.getElementById('resultStamp');
+    els.resultTitle = document.getElementById('resultTitle');
+    els.resultDesc = document.getElementById('resultDesc');
+    els.ctaButton = document.getElementById('ctaButton');
+    els.replayButton = document.getElementById('replayButton');
+
+    els.headline.textContent = CONFIG.headline;
+    els.subheadline.textContent = CONFIG.subheadline;
+    els.resultStamp.textContent = CONFIG.resultStamp;
+    els.resultTitle.textContent = CONFIG.resultTitle;
+    els.resultDesc.textContent = CONFIG.resultDesc;
+    els.ctaButton.textContent = CONFIG.ctaText;
+    els.replayButton.textContent = CONFIG.replayText;
+
+    renderProgress();
+    renderPuzzle();
+
+    els.ctaButton.addEventListener('click', function () {
+      track('cta_click', { puzzlesCompleted: state.puzzleIdx });
+      openLanding();
+    });
+    els.replayButton.addEventListener('click', resetGame);
+
+    var close = document.querySelector('.close-btn');
+    if (close) {
+      close.addEventListener('click', function () {
+        track('close_click');
+        openLanding();
+      });
+    }
+
+    track('creative_view');
+  }
+
+  function currentPuzzle() {
+    return CONFIG.puzzles[state.puzzleIdx];
+  }
+
+  function renderProgress() {
+    els.progress.innerHTML = '';
+    for (var i = 0; i < CONFIG.puzzles.length; i++) {
+      var d = document.createElement('div');
+      d.className = 'progress-dot';
+      if (i < state.puzzleIdx) d.classList.add('is-done');
+      else if (i === state.puzzleIdx) d.classList.add('is-active');
+      els.progress.appendChild(d);
+    }
+  }
+
+  function renderPuzzle() {
+    state.placed = {};
+    var p = currentPuzzle();
+    els.wordStage.innerHTML = '';
+    var blanks = {}; p.blanks.forEach(function (i) { blanks[i] = true; });
+    for (var i = 0; i < p.word.length; i++) {
+      var cell = document.createElement('div');
+      cell.className = 'word-cell';
+      cell.dataset.position = String(i);
+      if (blanks[i]) {
+        cell.classList.add('slot');
+        cell.dataset.expected = p.word.charAt(i);
+        cell.textContent = p.word.charAt(i); // hidden via CSS
+      } else {
+        cell.classList.add('filled-fixed');
+        cell.textContent = p.word.charAt(i);
+      }
+      els.wordStage.appendChild(cell);
+    }
+
+    els.tray.innerHTML = '';
+    p.tray.forEach(function (letter, idx) {
+      var t = document.createElement('div');
+      t.className = 'letter-tile';
+      t.textContent = letter;
+      t.dataset.letter = letter;
+      t.dataset.trayIdx = String(idx);
+      t.setAttribute('role', 'button');
+      t.setAttribute('aria-label', letter + ' 글자 타일');
+      t.addEventListener('pointerdown', onPointerDown);
+      els.tray.appendChild(t);
+    });
+    els.hint.classList.remove('hidden');
+  }
+
+  function onPointerDown(e) {
+    if (state.busy) return;
+    var source = e.currentTarget;
+    if (source.classList.contains('is-used')) return;
+
+    if (!state.started) {
+      state.started = true;
+      track('first_interaction', { letter: source.dataset.letter });
+    }
+    track('drag_start', { letter: source.dataset.letter });
+
+    els.hint.classList.add('hidden');
+
+    var rect = source.getBoundingClientRect();
+    var clone = source.cloneNode(true);
+    clone.classList.add('drag-clone');
+    clone.classList.remove('is-used');
+    clone.style.left = rect.left + 'px';
+    clone.style.top = rect.top + 'px';
+    clone.style.width = rect.width + 'px';
+    clone.style.height = rect.height + 'px';
+    document.body.appendChild(clone);
+
+    source.classList.add('is-dragging');
+
+    state.drag = {
+      source: source,
+      clone: clone,
+      letter: source.dataset.letter,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top
+    };
+
+    try { source.setPointerCapture(e.pointerId); } catch (err) {}
+    moveClone(e.clientX, e.clientY);
+    updateHover(e.clientX, e.clientY);
+
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp, { passive: false });
+    window.addEventListener('pointercancel', onPointerCancel, { passive: false });
+  }
+
+  function onPointerMove(e) {
+    if (!state.drag) return;
+    e.preventDefault();
+    moveClone(e.clientX, e.clientY);
+    updateHover(e.clientX, e.clientY);
+  }
+
+  function moveClone(cx, cy) {
+    var d = state.drag;
+    d.clone.style.left = (cx - d.offsetX) + 'px';
+    d.clone.style.top = (cy - d.offsetY) + 'px';
+  }
+
+  function getSlotAt(cx, cy) {
+    var slots = els.wordStage.querySelectorAll('.word-cell.slot');
+    for (var i = 0; i < slots.length; i++) {
+      var rect = slots[i].getBoundingClientRect();
+      if (cx >= rect.left - 8 && cx <= rect.right + 8 && cy >= rect.top - 8 && cy <= rect.bottom + 8) {
+        return slots[i];
+      }
+    }
+    return null;
+  }
+
+  function updateHover(cx, cy) {
+    var slots = els.wordStage.querySelectorAll('.word-cell.slot');
+    slots.forEach(function (s) { s.classList.remove('hover'); });
+    var target = getSlotAt(cx, cy);
+    if (target && !target.classList.contains('filled-correct')) target.classList.add('hover');
+  }
+
+  function onPointerUp(e) {
+    if (!state.drag) return;
+    e.preventDefault();
+    var target = getSlotAt(e.clientX, e.clientY);
+    var slots = els.wordStage.querySelectorAll('.word-cell.slot');
+    slots.forEach(function (s) { s.classList.remove('hover'); });
+
+    if (target && !target.classList.contains('filled-correct')) {
+      tryPlace(target);
+    } else {
+      cancelDrag();
+    }
+
+    cleanupDrag();
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerCancel);
+  }
+
+  function onPointerCancel() {
+    if (!state.drag) return;
+    cancelDrag();
+    cleanupDrag();
+  }
+
+  function tryPlace(slot) {
+    var d = state.drag;
+    var expected = slot.dataset.expected;
+    if (expected === d.letter) {
+      slot.classList.remove('slot');
+      slot.classList.add('slot', 'filled-correct');
+      slot.textContent = d.letter;
+      state.placed[slot.dataset.position] = d.letter;
+      d.source.classList.add('is-used');
+      d.source.classList.remove('is-dragging');
+      track('letter_correct', { letter: d.letter, position: slot.dataset.position });
+
+      if (isPuzzleComplete()) {
+        state.busy = true;
+        els.wordStage.classList.add('celebrate');
+        track('puzzle_complete', { puzzleIdx: state.puzzleIdx });
+        setTimeout(function () {
+          els.wordStage.classList.remove('celebrate');
+          state.puzzleIdx += 1;
+          renderProgress();
+          if (state.puzzleIdx >= CONFIG.puzzles.length) {
+            showResult();
+          } else {
+            renderPuzzle();
+          }
+          state.busy = false;
+        }, 720);
+      }
+    } else {
+      // wrong letter
+      slot.classList.add('shake');
+      setTimeout(function () { slot.classList.remove('shake'); }, 400);
+      d.source.classList.remove('is-dragging');
+      track('letter_wrong', { letter: d.letter, position: slot.dataset.position, expected: expected });
+    }
+  }
+
+  function cancelDrag() {
+    if (!state.drag) return;
+    state.drag.source.classList.remove('is-dragging');
+  }
+
+  function cleanupDrag() {
+    if (!state.drag) return;
+    if (state.drag.clone && state.drag.clone.parentNode) {
+      state.drag.clone.parentNode.removeChild(state.drag.clone);
+    }
+    state.drag = null;
+  }
+
+  function isPuzzleComplete() {
+    var slots = els.wordStage.querySelectorAll('.word-cell.slot');
+    for (var i = 0; i < slots.length; i++) {
+      if (!slots[i].classList.contains('filled-correct')) return false;
+    }
+    return true;
+  }
+
+  function showResult() {
+    els.resultOverlay.classList.add('is-visible');
+    track('complete', { puzzlesCompleted: state.puzzleIdx });
+  }
+
+  function resetGame() {
+    state.puzzleIdx = 0;
+    state.placed = {};
+    state.started = false;
+    state.busy = false;
+    els.resultOverlay.classList.remove('is-visible');
+    renderProgress();
+    renderPuzzle();
+    track('replay_click');
+  }
+
+  function getLandingUrl() {
+    var params = new URLSearchParams(window.location.search);
+    return params.get('clickTag') || params.get('clickTAG') || params.get('landing') || window.clickTag || window.clickTAG || CONFIG.landingUrl;
+  }
+
+  function openLanding() {
+    var url = getLandingUrl();
+    if (!url) return;
+    try {
+      if (window.mraid && typeof window.mraid.open === 'function') {
+        window.mraid.open(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch (e) {
+      window.location.href = url;
+    }
+  }
+
+  function track(eventName, payload) {
+    var detail = payload || {};
+    window.dispatchEvent(new CustomEvent('magentPlayableEvent', {
+      detail: { name: eventName, payload: detail, ts: Date.now() }
+    }));
+    if (window.MAGENT_DEBUG) console.log('[MagentWordCompletion]', eventName, detail);
+  }
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="ad.size" content="width=320,height=480" />
+  <title>Magent Block Blast Playable</title>
+  <style>
+:root {
+  --bg-1: #ff7aa2;
+  --bg-2: #d6285f;
+  --bg-3: #6e0a36;
+  --board-bg-1: #131a3a;
+  --board-bg-2: #1f2756;
+  --accent: #ec4899;
+  --accent-2: #fbbf24;
+  --good: #34d399;
+  --warn: #fbbf24;
+  --danger: #fb7185;
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.78);
+  --board-size: min(86vw, 360px);
+  --cell: calc((var(--board-size) - 14px) / 8);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; min-height: 100%; background: #1a0612; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif; }
+body { display: grid; place-items: center; overflow: hidden; color: var(--text); }
+button { font: inherit; }
+
+.playable {
+  position: relative;
+  width: min(100vw, 430px);
+  height: min(100vh, 760px);
+  min-height: 560px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(251, 191, 36, 0.22), transparent 26%),
+    radial-gradient(circle at 82% 6%, rgba(255, 255, 255, 0.18), transparent 24%),
+    radial-gradient(circle at 50% 100%, rgba(110, 10, 54, 0.55), transparent 50%),
+    linear-gradient(160deg, var(--bg-1), var(--bg-2) 70%, var(--bg-3));
+  isolation: isolate;
+  user-select: none;
+  touch-action: none;
+}
+
+.playable::before,
+.playable::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(2px);
+  pointer-events: none;
+  opacity: 0.82;
+}
+.playable::before {
+  width: 200px; height: 200px; right: -80px; top: 150px;
+  background: rgba(255, 255, 255, 0.18);
+}
+.playable::after {
+  width: 170px; height: 170px; left: -80px; bottom: 80px;
+  background: rgba(251, 191, 36, 0.16);
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 32px; height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.95);
+  z-index: 30;
+  cursor: pointer;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 2;
+  padding: 18px 22px 8px;
+  text-align: center;
+}
+
+.brand-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.hero-copy h1 {
+  margin: 10px 0 6px;
+  font-size: clamp(22px, 6vw, 29px);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+  text-shadow: 0 2px 8px rgba(110, 10, 54, 0.36);
+}
+.hero-copy p {
+  margin: 0 auto;
+  max-width: 330px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+  word-break: keep-all;
+}
+
+.game-card {
+  position: relative;
+  z-index: 2;
+  margin: 8px 16px 0;
+  padding: 14px 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.07));
+  box-shadow: 0 22px 70px rgba(110, 10, 54, 0.42);
+  backdrop-filter: blur(12px);
+}
+
+.score-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin: 0 2px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+}
+.score-label { letter-spacing: 0.04em; }
+.score-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.20);
+  overflow: hidden;
+}
+.score-bar span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #fbbf24, #f472b6, #ec4899);
+  transition: width 320ms ease;
+}
+.score-count b { color: #fff; font-size: 14px; }
+
+.board-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 8px 0 8px;
+}
+
+.board {
+  position: relative;
+  width: var(--board-size);
+  height: var(--board-size);
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 2px;
+  padding: 7px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(7, 12, 36, 0.92), rgba(28, 22, 58, 0.92));
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.11),
+    0 18px 44px rgba(0, 0, 0, 0.32);
+}
+
+.board-cell {
+  position: relative;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.045);
+  transition: background 160ms ease, transform 200ms ease, box-shadow 200ms ease;
+}
+
+.board-cell.preset {
+  background: linear-gradient(135deg, #f43f5e, #b91c1c);
+  border-color: rgba(255,255,255,0.30);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.30), 0 4px 10px rgba(0,0,0,0.18);
+}
+.board-cell.filled.piece-i { background: linear-gradient(135deg, #22d3ee, #3b82f6); border-color: rgba(255,255,255,0.30); box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), 0 4px 10px rgba(0,0,0,0.18); }
+.board-cell.filled.piece-o { background: linear-gradient(135deg, #fbbf24, #f97316); border-color: rgba(255,255,255,0.30); box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), 0 4px 10px rgba(0,0,0,0.18); }
+.board-cell.filled.piece-t { background: linear-gradient(135deg, #a78bfa, #ec4899); border-color: rgba(255,255,255,0.30); box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), 0 4px 10px rgba(0,0,0,0.18); }
+.board-cell.filled.piece-l { background: linear-gradient(135deg, #34d399, #10b981); border-color: rgba(255,255,255,0.30); box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), 0 4px 10px rgba(0,0,0,0.18); }
+.board-cell.filled.piece-s { background: linear-gradient(135deg, #f472b6, #ef4444); border-color: rgba(255,255,255,0.30); box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), 0 4px 10px rgba(0,0,0,0.18); }
+
+.board-cell.preview {
+  background: rgba(34, 211, 238, 0.30) !important;
+  border-color: rgba(34, 211, 238, 0.65) !important;
+  box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.55);
+}
+.board-cell.preview-invalid {
+  background: rgba(251, 113, 133, 0.32) !important;
+  border-color: rgba(251, 113, 133, 0.65) !important;
+}
+.board-cell.clearing {
+  animation: cellClear 380ms ease both;
+}
+@keyframes cellClear {
+  0% { transform: scale(1); filter: brightness(1); }
+  35% { transform: scale(1.12); filter: brightness(1.6); }
+  100% { transform: scale(0.2); opacity: 0; filter: brightness(2.2); }
+}
+
+.board.correct-pulse { animation: correctPulse 360ms ease both; }
+.board.wrong-shake { animation: wrongShake 360ms ease both; }
+@keyframes correctPulse { 0% { transform: scale(1); } 50% { transform: scale(1.018); } 100% { transform: scale(1); } }
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(4px); }
+}
+
+.board-hint {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(10, 12, 28, 0.66);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.84);
+  font-size: 11px;
+  font-weight: 800;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.board-hint.hidden { opacity: 0; }
+
+.tray-title {
+  margin: 10px 0 8px;
+  text-align: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.piece-tray {
+  min-height: 86px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 20px;
+  background: rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.piece {
+  --mini-cell: 18px;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--mini-cell));
+  grid-template-rows: repeat(var(--rows), var(--mini-cell));
+  gap: 3px;
+  padding: 7px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.22);
+  cursor: grab;
+  touch-action: none;
+  transition: transform 160ms ease, opacity 160ms ease, filter 160ms ease;
+}
+.piece:active { cursor: grabbing; }
+.piece.is-hidden { opacity: 0.22; filter: grayscale(1); transform: scale(0.92); pointer-events: none; }
+.piece.is-placed { opacity: 0.22; filter: grayscale(1); transform: scale(0.85); pointer-events: none; }
+.piece-cell { border-radius: 5px; background: transparent; }
+.piece-cell.on {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22), 0 5px 10px rgba(0,0,0,0.20);
+}
+.piece-i .piece-cell.on { background: linear-gradient(135deg, #22d3ee, #3b82f6); }
+.piece-o .piece-cell.on { background: linear-gradient(135deg, #fbbf24, #f97316); }
+.piece-t .piece-cell.on { background: linear-gradient(135deg, #a78bfa, #ec4899); }
+.piece-l .piece-cell.on { background: linear-gradient(135deg, #34d399, #10b981); }
+.piece-s .piece-cell.on { background: linear-gradient(135deg, #f472b6, #ef4444); }
+
+.drag-clone {
+  position: fixed;
+  z-index: 100;
+  pointer-events: none;
+  filter: drop-shadow(0 22px 28px rgba(0,0,0,0.42));
+}
+.drag-clone .piece-cell.on { animation: dragBlink 760ms ease-in-out infinite alternate; }
+@keyframes dragBlink { from { filter: brightness(1); } to { filter: brightness(1.20); } }
+
+.hand-cue {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  left: 50%;
+  bottom: 110px;
+  z-index: 4;
+  pointer-events: none;
+  margin-left: -23px;
+  animation: handMove 1600ms ease-in-out infinite;
+  opacity: 0.95;
+}
+.hand-cue::before {
+  content: "☝️";
+  position: absolute;
+  font-size: 36px;
+  transform: rotate(-20deg);
+}
+.hand-cue::after {
+  content: "";
+  position: absolute;
+  left: 6px; top: 6px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.65);
+  animation: ripple 1600ms ease-in-out infinite;
+}
+@keyframes handMove { 0%, 100% { transform: translate(0,0); } 55% { transform: translate(-26px, -64px); } }
+@keyframes ripple { 0%, 30% { opacity: 0; transform: scale(0.5); } 55% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.7); } }
+.hand-cue.hidden { display: none; }
+
+.combo-pop {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  transform: translate(-50%, -50%) scale(0.5);
+  z-index: 12;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fbbf24, #ec4899);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 18px 40px rgba(236, 72, 153, 0.42);
+}
+.combo-pop.is-visible {
+  animation: comboPop 900ms ease both;
+}
+@keyframes comboPop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  30% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
+  60% { opacity: 1; transform: translate(-50%, -68%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -90%) scale(0.95); }
+}
+
+.result-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(5, 8, 20, 0.74);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 260ms ease, visibility 260ms ease;
+}
+.result-panel.is-visible { opacity: 1; visibility: visible; }
+.result-glow {
+  position: absolute;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.48), transparent 62%);
+  animation: glowPulse 1600ms ease-in-out infinite alternate;
+}
+@keyframes glowPulse { from { transform: scale(0.94); opacity: 0.75; } to { transform: scale(1.08); opacity: 1; } }
+.result-card {
+  position: relative;
+  width: min(100%, 340px);
+  padding: 28px 22px 20px;
+  border-radius: 30px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08));
+  border: 1px solid rgba(255,255,255,0.20);
+  box-shadow: 0 30px 70px rgba(0,0,0,0.46);
+}
+.reward-icon {
+  width: 72px; height: 72px;
+  margin: 0 auto 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #fbbf24, #f472b6, #8b5cf6);
+  box-shadow: 0 16px 36px rgba(236, 72, 153, 0.42);
+  font-size: 38px;
+}
+.result-card h2 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  letter-spacing: -0.04em;
+}
+.result-card p {
+  margin: 0 auto 18px;
+  max-width: 270px;
+  color: rgba(255,255,255,0.78);
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+.cta-button,
+.replay-button {
+  width: 100%;
+  border: 0;
+  border-radius: 18px;
+  cursor: pointer;
+}
+.cta-button {
+  height: 54px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ec4899, #f97316);
+  box-shadow: 0 16px 28px rgba(236, 72, 153, 0.40);
+}
+.replay-button {
+  height: 42px;
+  margin-top: 8px;
+  color: rgba(255,255,255,0.84);
+  background: rgba(255,255,255,0.12);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+@media (max-height: 650px) {
+  :root { --board-size: min(74vw, 280px); }
+  .hero-copy { padding-top: 12px; }
+  .hero-copy h1 { font-size: 22px; margin-top: 7px; }
+  .hero-copy p { font-size: 12px; }
+  .game-card { margin-top: 4px; padding: 11px 12px 12px; border-radius: 22px; }
+  .piece-tray { min-height: 72px; padding: 8px 6px; gap: 8px; }
+  .piece { --mini-cell: 15px; padding: 6px; gap: 2px; }
+  .board { gap: 2px; padding: 6px; border-radius: 18px; }
+  .tray-title { margin: 4px 0 5px; }
+}
+
+</style>
+</head>
+<body>
+  <main class="playable" id="playable" aria-label="블록 블라스트 플레이어블 광고">
+    <button class="close-btn" type="button" aria-label="닫기">×</button>
+
+    <section class="hero-copy" aria-live="polite">
+      <div class="brand-pill">MAGENT PLAYABLE</div>
+      <h1 id="headline">블록을 채워 라인을 터뜨려요</h1>
+      <p id="subheadline">아래 블록을 보드에 드래그해 가로/세로 한 줄을 채우세요.</p>
+    </section>
+
+    <section class="game-card" aria-label="블록 블라스트 게임 영역">
+      <div class="score-row">
+        <span class="score-label">라인</span>
+        <div class="score-bar" aria-hidden="true"><span id="scoreFill"></span></div>
+        <span class="score-count"><b id="clearCount">0</b>/<span id="targetCount">3</span></span>
+      </div>
+
+      <div class="board-wrap">
+        <div id="boardHint" class="board-hint">한 줄을 가득 채우면 클리어</div>
+        <div id="board" class="board" aria-label="블록을 놓는 보드"></div>
+      </div>
+
+      <div class="tray-title">블록을 드래그하세요</div>
+      <div id="tray" class="piece-tray" aria-label="드래그 가능한 블록 목록"></div>
+    </section>
+
+    <section id="resultPanel" class="result-panel" aria-hidden="true">
+      <div class="result-glow"></div>
+      <div class="result-card">
+        <div class="reward-icon" aria-hidden="true">🎉</div>
+        <h2 id="resultTitle">라인 클리어 완성!</h2>
+        <p id="resultDesc">연쇄 콤보와 더 큰 보상은 게임에서 만나보세요.</p>
+        <button id="ctaButton" class="cta-button" type="button">지금 플레이하기</button>
+        <button id="replayButton" class="replay-button" type="button">다시 도전하기</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+(function () {
+  'use strict';
+
+  var CONFIG = {
+    landingUrl: 'https://example.com',
+    headline: '블록을 채워 라인을 터뜨려요',
+    subheadline: '아래 블록을 보드에 드래그해 가로/세로 한 줄을 채우세요.',
+    resultTitle: '라인 클리어 완성!',
+    resultDesc: '연쇄 콤보와 더 큰 보상은 게임에서 만나보세요.',
+    ctaText: '지금 플레이하기',
+    rows: 8,
+    cols: 8,
+    targetClears: 3,
+    // preset cells (red blocker tiles), '' for empty
+    initialBoard: [
+      ['',       '',       '',       '',       '',       '',       '',       ''      ],
+      ['preset', 'preset', 'preset', 'preset', '',       '',       '',       'preset'],
+      ['',       '',       '',       '',       '',       '',       '',       ''      ],
+      ['',       '',       '',       '',       'preset', 'preset', 'preset', 'preset'],
+      ['',       '',       '',       '',       '',       '',       '',       ''      ],
+      ['preset', 'preset', 'preset', '',       '',       '',       'preset', 'preset'],
+      ['',       '',       '',       '',       '',       '',       '',       ''      ],
+      ['preset', 'preset', 'preset', 'preset', '',       '',       '',       ''      ]
+    ],
+    pieces: [
+      { id: 'a', name: '3블록', className: 'piece-i', shape: [[1,1,1]] },
+      { id: 'b', name: '3블록', className: 'piece-l', shape: [[1,1,1]] },
+      { id: 'c', name: '4블록', className: 'piece-o', shape: [[1,1,1,1]] }
+    ]
+  };
+
+  var state = {
+    grid: [],
+    placed: {},
+    clears: 0,
+    drag: null,
+    boardCells: [],
+    started: false,
+    waveCount: 0,
+    finishing: false
+  };
+
+  var els = {};
+
+  document.addEventListener('DOMContentLoaded', init);
+
+  function init() {
+    els.playable = document.getElementById('playable');
+    els.headline = document.getElementById('headline');
+    els.subheadline = document.getElementById('subheadline');
+    els.board = document.getElementById('board');
+    els.tray = document.getElementById('tray');
+    els.boardHint = document.getElementById('boardHint');
+    els.scoreFill = document.getElementById('scoreFill');
+    els.clearCount = document.getElementById('clearCount');
+    els.targetCount = document.getElementById('targetCount');
+    els.resultPanel = document.getElementById('resultPanel');
+    els.resultTitle = document.getElementById('resultTitle');
+    els.resultDesc = document.getElementById('resultDesc');
+    els.ctaButton = document.getElementById('ctaButton');
+    els.replayButton = document.getElementById('replayButton');
+
+    els.headline.textContent = CONFIG.headline;
+    els.subheadline.textContent = CONFIG.subheadline;
+    els.resultTitle.textContent = CONFIG.resultTitle;
+    els.resultDesc.textContent = CONFIG.resultDesc;
+    els.ctaButton.textContent = CONFIG.ctaText;
+    if (els.targetCount) els.targetCount.textContent = String(CONFIG.targetClears);
+
+    initGrid();
+    renderBoard();
+    renderTray();
+    updateScore();
+
+    els.ctaButton.addEventListener('click', function () {
+      track('cta_click', { clears: state.clears });
+      openLanding();
+    });
+    els.replayButton.addEventListener('click', resetGame);
+
+    var close = document.querySelector('.close-btn');
+    if (close) {
+      close.addEventListener('click', function () {
+        track('close_click');
+        openLanding();
+      });
+    }
+
+    addHandCue();
+    track('creative_view');
+  }
+
+  function initGrid() {
+    state.grid = [];
+    for (var r = 0; r < CONFIG.rows; r++) {
+      var row = [];
+      for (var c = 0; c < CONFIG.cols; c++) {
+        var v = (CONFIG.initialBoard[r] && CONFIG.initialBoard[r][c]) || '';
+        row.push(v === 'preset' ? 'preset' : null);
+      }
+      state.grid.push(row);
+    }
+  }
+
+  function renderBoard() {
+    els.board.innerHTML = '';
+    state.boardCells = [];
+    for (var r = 0; r < CONFIG.rows; r++) {
+      for (var c = 0; c < CONFIG.cols; c++) {
+        var cell = document.createElement('div');
+        cell.className = 'board-cell';
+        cell.dataset.row = String(r);
+        cell.dataset.col = String(c);
+        var v = state.grid[r][c];
+        if (v === 'preset') {
+          cell.classList.add('preset');
+        } else if (v) {
+          cell.classList.add('filled', v);
+        }
+        els.board.appendChild(cell);
+        state.boardCells.push(cell);
+      }
+    }
+  }
+
+  function renderTray() {
+    els.tray.innerHTML = '';
+    CONFIG.pieces.forEach(function (piece) {
+      els.tray.appendChild(createPieceElement(piece));
+    });
+  }
+
+  function createPieceElement(piece) {
+    var rows = piece.shape.length;
+    var cols = piece.shape[0].length;
+    var pieceEl = document.createElement('div');
+    pieceEl.className = 'piece ' + piece.className;
+    pieceEl.dataset.pieceId = piece.id;
+    pieceEl.setAttribute('role', 'button');
+    pieceEl.setAttribute('aria-label', piece.name + ' 드래그');
+    pieceEl.style.setProperty('--rows', String(rows));
+    pieceEl.style.setProperty('--cols', String(cols));
+
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var cell = document.createElement('div');
+        cell.className = 'piece-cell' + (piece.shape[r][c] ? ' on' : '');
+        pieceEl.appendChild(cell);
+      }
+    }
+
+    if (state.placed[piece.id]) {
+      pieceEl.classList.add('is-placed');
+    } else {
+      pieceEl.addEventListener('pointerdown', onPointerDown);
+    }
+    return pieceEl;
+  }
+
+  function addHandCue() {
+    var hand = document.createElement('div');
+    hand.className = 'hand-cue';
+    hand.setAttribute('aria-hidden', 'true');
+    els.playable.appendChild(hand);
+    els.handCue = hand;
+  }
+
+  function getBoardMetrics() {
+    var rect = els.board.getBoundingClientRect();
+    var style = window.getComputedStyle(els.board);
+    var padding = parseFloat(style.paddingLeft) || 0;
+    var gap = parseFloat(style.gap) || parseFloat(style.columnGap) || 0;
+    var inner = rect.width - padding * 2;
+    var cellSize = (inner - (CONFIG.cols - 1) * gap) / CONFIG.cols;
+    return { rect: rect, padding: padding, gap: gap, cellSize: cellSize, cellPitch: cellSize + gap };
+  }
+
+  function onPointerDown(e) {
+    var source = e.currentTarget;
+    var piece = getPiece(source.dataset.pieceId);
+    if (!piece || state.placed[piece.id]) return;
+
+    if (!state.started) {
+      state.started = true;
+      track('first_interaction', { type: 'drag_start', piece: piece.id });
+    }
+    track('drag_start', { piece: piece.id });
+
+    if (els.handCue) els.handCue.classList.add('hidden');
+    if (els.boardHint) els.boardHint.classList.add('hidden');
+
+    var metrics = getBoardMetrics();
+    var pieceW = piece.shape[0].length * metrics.cellSize + (piece.shape[0].length - 1) * metrics.gap;
+    var pieceH = piece.shape.length * metrics.cellSize + (piece.shape.length - 1) * metrics.gap;
+    var pointerOffsetX = pieceW / 2;
+    var pointerOffsetY = pieceH + metrics.cellSize * 0.8;
+
+    var clone = createDragClone(piece, metrics, pieceW, pieceH);
+    clone.style.left = (e.clientX - pointerOffsetX) + 'px';
+    clone.style.top = (e.clientY - pointerOffsetY) + 'px';
+    document.body.appendChild(clone);
+
+    source.classList.add('is-hidden');
+
+    state.drag = {
+      piece: piece,
+      source: source,
+      clone: clone,
+      pointerOffsetX: pointerOffsetX,
+      pointerOffsetY: pointerOffsetY,
+      pieceW: pieceW,
+      pieceH: pieceH,
+      metrics: metrics
+    };
+
+    try { source.setPointerCapture(e.pointerId); } catch (err) {}
+    previewTarget(e.clientX, e.clientY);
+
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp, { passive: false });
+    window.addEventListener('pointercancel', onPointerCancel, { passive: false });
+  }
+
+  function createDragClone(piece, metrics, pieceW, pieceH) {
+    var rows = piece.shape.length;
+    var cols = piece.shape[0].length;
+    var el = document.createElement('div');
+    el.className = 'piece ' + piece.className + ' drag-clone';
+    el.style.setProperty('--rows', String(rows));
+    el.style.setProperty('--cols', String(cols));
+    el.style.setProperty('--mini-cell', metrics.cellSize + 'px');
+    el.style.gap = metrics.gap + 'px';
+    el.style.padding = '0';
+    el.style.background = 'transparent';
+    el.style.border = '0';
+    el.style.boxShadow = 'none';
+    el.style.gridTemplateColumns = 'repeat(' + cols + ', ' + metrics.cellSize + 'px)';
+    el.style.gridTemplateRows = 'repeat(' + rows + ', ' + metrics.cellSize + 'px)';
+    el.style.width = pieceW + 'px';
+    el.style.height = pieceH + 'px';
+
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var cell = document.createElement('div');
+        cell.className = 'piece-cell' + (piece.shape[r][c] ? ' on' : '');
+        el.appendChild(cell);
+      }
+    }
+    return el;
+  }
+
+  function onPointerMove(e) {
+    if (!state.drag) return;
+    e.preventDefault();
+    moveClone(e.clientX, e.clientY);
+    previewTarget(e.clientX, e.clientY);
+  }
+
+  function moveClone(cx, cy) {
+    var d = state.drag;
+    d.clone.style.left = (cx - d.pointerOffsetX) + 'px';
+    d.clone.style.top = (cy - d.pointerOffsetY) + 'px';
+  }
+
+  function previewTarget(cx, cy) {
+    clearPreview();
+    var anchor = cursorToGridAnchor(cx, cy);
+    if (!anchor) return;
+    var piece = state.drag.piece;
+    var ok = canPlace(piece, anchor.row, anchor.col);
+    forEachShapeCell(piece, function (r, c) {
+      var cell = getCell(anchor.row + r, anchor.col + c);
+      if (cell) cell.classList.add(ok ? 'preview' : 'preview-invalid');
+    });
+  }
+
+  function cursorToGridAnchor(cx, cy) {
+    var d = state.drag;
+    var metrics = d.metrics;
+    var cloneLeft = cx - d.pointerOffsetX;
+    var cloneTop = cy - d.pointerOffsetY;
+    var inboardX = cloneLeft - metrics.rect.left - metrics.padding;
+    var inboardY = cloneTop - metrics.rect.top - metrics.padding;
+    var col = Math.round(inboardX / metrics.cellPitch);
+    var row = Math.round(inboardY / metrics.cellPitch);
+    var maxRow = CONFIG.rows - d.piece.shape.length;
+    var maxCol = CONFIG.cols - d.piece.shape[0].length;
+    if (row < 0 || col < 0 || row > maxRow || col > maxCol) return null;
+    return { row: row, col: col };
+  }
+
+  function canPlace(piece, row, col) {
+    var ok = true;
+    forEachShapeCell(piece, function (r, c) {
+      var rr = row + r;
+      var cc = col + c;
+      if (rr < 0 || cc < 0 || rr >= CONFIG.rows || cc >= CONFIG.cols) { ok = false; return; }
+      if (state.grid[rr][cc]) { ok = false; return; }
+    });
+    return ok;
+  }
+
+  function clearPreview() {
+    state.boardCells.forEach(function (c) { c.classList.remove('preview', 'preview-invalid'); });
+  }
+
+  function onPointerUp(e) {
+    if (!state.drag) return;
+    e.preventDefault();
+    clearPreview();
+    var dropped = tryDrop(e.clientX, e.clientY);
+    if (!dropped) rejectDrop();
+    cleanupDrag();
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerCancel);
+  }
+
+  function onPointerCancel() {
+    if (!state.drag) return;
+    clearPreview();
+    rejectDrop();
+    cleanupDrag();
+  }
+
+  function tryDrop(cx, cy) {
+    var anchor = cursorToGridAnchor(cx, cy);
+    if (!anchor) return false;
+    var piece = state.drag.piece;
+    if (!canPlace(piece, anchor.row, anchor.col)) return false;
+
+    placePiece(piece, anchor.row, anchor.col);
+    state.drag.source.classList.remove('is-hidden');
+    state.drag.source.classList.add('is-placed');
+    state.placed[piece.id] = true;
+    track('piece_placed', { piece: piece.id });
+
+    var cleared = clearFullLines();
+    if (cleared > 0) {
+      state.clears += cleared;
+      showComboPop(cleared);
+      track('lines_cleared', { count: cleared, total: state.clears });
+    }
+    updateScore();
+    pulseBoard('correct-pulse');
+
+    if (state.clears >= CONFIG.targetClears && !state.finishing) {
+      state.finishing = true;
+      setTimeout(showResult, 700);
+    } else if (allPlaced()) {
+      // refill tray with another wave so the player can keep going
+      setTimeout(refillTray, 500);
+    }
+    return true;
+  }
+
+  function allPlaced() {
+    return CONFIG.pieces.every(function (p) { return state.placed[p.id]; });
+  }
+
+  function refillTray() {
+    if (state.finishing) return;
+    state.waveCount += 1;
+    state.placed = {};
+    renderTray();
+    if (els.boardHint) {
+      els.boardHint.textContent = '같은 색 라인을 채워보세요';
+      els.boardHint.classList.remove('hidden');
+      setTimeout(function () { els.boardHint.classList.add('hidden'); }, 1400);
+    }
+    track('tray_refill', { wave: state.waveCount });
+  }
+
+  function placePiece(piece, row, col) {
+    forEachShapeCell(piece, function (r, c) {
+      state.grid[row + r][col + c] = piece.className;
+      var cell = getCell(row + r, col + c);
+      if (cell) cell.classList.add('filled', piece.className);
+    });
+  }
+
+  function clearFullLines() {
+    var rowsToClear = [];
+    var colsToClear = [];
+    for (var r = 0; r < CONFIG.rows; r++) {
+      var full = true;
+      for (var c = 0; c < CONFIG.cols; c++) {
+        if (!state.grid[r][c]) { full = false; break; }
+      }
+      if (full) rowsToClear.push(r);
+    }
+    for (var c = 0; c < CONFIG.cols; c++) {
+      var full = true;
+      for (var r = 0; r < CONFIG.rows; r++) {
+        if (!state.grid[r][c]) { full = false; break; }
+      }
+      if (full) colsToClear.push(c);
+    }
+    var total = rowsToClear.length + colsToClear.length;
+    if (total === 0) return 0;
+
+    var indices = {};
+    rowsToClear.forEach(function (r) {
+      for (var c = 0; c < CONFIG.cols; c++) indices[r * CONFIG.cols + c] = true;
+    });
+    colsToClear.forEach(function (c) {
+      for (var r = 0; r < CONFIG.rows; r++) indices[r * CONFIG.cols + c] = true;
+    });
+
+    Object.keys(indices).forEach(function (k) {
+      var cell = state.boardCells[parseInt(k, 10)];
+      if (cell) cell.classList.add('clearing');
+    });
+
+    setTimeout(function () {
+      Object.keys(indices).forEach(function (k) {
+        var idx = parseInt(k, 10);
+        var r = Math.floor(idx / CONFIG.cols);
+        var c = idx % CONFIG.cols;
+        state.grid[r][c] = null;
+        var cell = state.boardCells[idx];
+        if (cell) cell.className = 'board-cell';
+      });
+    }, 400);
+
+    return total;
+  }
+
+  function showComboPop(n) {
+    var pop = document.createElement('div');
+    pop.className = 'combo-pop is-visible';
+    pop.textContent = n > 1 ? n + ' 콤보!' : '클리어!';
+    els.playable.appendChild(pop);
+    setTimeout(function () { if (pop.parentNode) pop.parentNode.removeChild(pop); }, 950);
+  }
+
+  function rejectDrop() {
+    if (!state.drag) return;
+    state.drag.source.classList.remove('is-hidden');
+    pulseBoard('wrong-shake');
+    track('wrong_drop', { piece: state.drag.piece.id });
+  }
+
+  function cleanupDrag() {
+    if (!state.drag) return;
+    if (state.drag.clone && state.drag.clone.parentNode) {
+      state.drag.clone.parentNode.removeChild(state.drag.clone);
+    }
+    state.drag = null;
+  }
+
+  function updateScore() {
+    if (els.clearCount) els.clearCount.textContent = String(state.clears);
+    if (els.scoreFill) els.scoreFill.style.width = Math.min(100, (state.clears / CONFIG.targetClears) * 100) + '%';
+  }
+
+  function resetGame() {
+    state.placed = {};
+    state.clears = 0;
+    state.started = false;
+    state.waveCount = 0;
+    state.finishing = false;
+    els.resultPanel.classList.remove('is-visible');
+    els.resultPanel.setAttribute('aria-hidden', 'true');
+    initGrid();
+    renderBoard();
+    renderTray();
+    updateScore();
+    if (els.boardHint) els.boardHint.classList.remove('hidden');
+    if (els.handCue) els.handCue.classList.remove('hidden');
+    track('replay_click');
+  }
+
+  function showResult() {
+    els.resultPanel.classList.add('is-visible');
+    els.resultPanel.setAttribute('aria-hidden', 'false');
+    track('complete', { clears: state.clears });
+  }
+
+  function getPiece(id) {
+    for (var i = 0; i < CONFIG.pieces.length; i++) {
+      if (CONFIG.pieces[i].id === id) return CONFIG.pieces[i];
+    }
+    return null;
+  }
+
+  function getCell(row, col) {
+    if (row < 0 || col < 0 || row >= CONFIG.rows || col >= CONFIG.cols) return null;
+    return state.boardCells[row * CONFIG.cols + col];
+  }
+
+  function forEachShapeCell(piece, fn) {
+    for (var r = 0; r < piece.shape.length; r++) {
+      for (var c = 0; c < piece.shape[r].length; c++) {
+        if (piece.shape[r][c]) fn(r, c);
+      }
+    }
+  }
+
+  function pulseBoard(className) {
+    els.board.classList.remove('correct-pulse', 'wrong-shake');
+    void els.board.offsetWidth;
+    els.board.classList.add(className);
+    window.setTimeout(function () { els.board.classList.remove(className); }, 420);
+  }
+
+  function getLandingUrl() {
+    var params = new URLSearchParams(window.location.search);
+    return params.get('clickTag') || params.get('clickTAG') || params.get('landing') || window.clickTag || window.clickTAG || CONFIG.landingUrl;
+  }
+
+  function openLanding() {
+    var url = getLandingUrl();
+    if (!url) return;
+    try {
+      if (window.mraid && typeof window.mraid.open === 'function') {
+        window.mraid.open(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch (e) {
+      window.location.href = url;
+    }
+  }
+
+  function track(eventName, payload) {
+    var detail = payload || {};
+    window.dispatchEvent(new CustomEvent('magentPlayableEvent', {
+      detail: { name: eventName, payload: detail, ts: Date.now() }
+    }));
+    if (window.MAGENT_DEBUG) console.log('[MagentBlockBlast]', eventName, detail);
+  }
+})();
+
+</script>
+</body>
+</html>

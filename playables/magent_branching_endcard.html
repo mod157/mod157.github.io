@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="ad.size" content="width=320,height=480" />
+  <title>Branching End Card</title>
+  <style>
+:root {
+  --sky-1: #fcd34d;
+  --sky-2: #fb7185;
+  --sky-3: #a855f7;
+  --skin: #ffe4d6;
+  --hair: #1f2937;
+  --ink: #1f2937;
+  --paper: #fff8f0;
+  --paper-shadow: rgba(31, 41, 55, 0.18);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; min-height: 100%; background: #2a0e23; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif; }
+body { display: grid; place-items: center; overflow: hidden; color: var(--ink); }
+button { font: inherit; }
+
+.scene {
+  position: relative;
+  width: min(100vw, 430px);
+  height: min(100vh, 760px);
+  min-height: 560px;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+  background:
+    linear-gradient(180deg, transparent 72%, rgba(31, 18, 49, 0.22) 100%),
+    radial-gradient(ellipse 80% 35% at 50% 28%, rgba(254, 243, 199, 0.55), transparent 70%),
+    linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 48%, var(--sky-3) 100%);
+}
+
+.sun {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  width: 88px;
+  height: 88px;
+  margin-left: -44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #fef3c7 0%, #fbbf24 50%, rgba(251, 191, 36, 0.0) 100%);
+  filter: blur(1px);
+  z-index: 1;
+}
+
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+.particles span {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  filter: blur(0.5px);
+  animation: drift 6500ms linear infinite;
+  bottom: -10px;
+}
+@keyframes drift {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-720px); opacity: 0; }
+}
+
+.close-btn {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 30px; height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(31, 18, 49, 0.18);
+  color: rgba(255, 255, 255, 0.95);
+  z-index: 30;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.character-stage {
+  position: absolute;
+  top: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  max-width: 280px;
+  height: 56%;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.character {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 18px 32px rgba(31, 18, 49, 0.32));
+  animation: charIdle 4200ms ease-in-out infinite;
+  transition: filter 400ms ease, transform 380ms ease;
+}
+@keyframes charIdle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+.character[data-expression="happy"] {
+  animation-duration: 3200ms;
+}
+.character[data-expression="sad"] {
+  animation-duration: 5400ms;
+  filter: drop-shadow(0 14px 22px rgba(15, 23, 42, 0.42)) saturate(0.85);
+}
+
+.character .eyes.neutral,
+.character .eyes.happy,
+.character .eyes.sad,
+.character .mouth.neutral,
+.character .mouth.happy,
+.character .mouth.sad,
+.character .blush,
+.character .tear {
+  visibility: hidden;
+}
+.character[data-expression="neutral"] .eyes.neutral,
+.character[data-expression="neutral"] .mouth.neutral { visibility: visible; }
+.character[data-expression="happy"] .eyes.happy,
+.character[data-expression="happy"] .mouth.happy,
+.character[data-expression="happy"] .blush { visibility: visible; }
+.character[data-expression="sad"] .eyes.sad,
+.character[data-expression="sad"] .mouth.sad,
+.character[data-expression="sad"] .tear { visibility: visible; }
+
+.dialog-card {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  z-index: 5;
+  background: var(--paper);
+  border-radius: 18px;
+  padding: 16px 18px 16px;
+  box-shadow: 0 -2px 0 rgba(31, 18, 49, 0.1), 0 18px 40px var(--paper-shadow);
+  border: 1px solid rgba(31, 18, 49, 0.08);
+}
+
+.dialog-name {
+  display: inline-block;
+  padding: 3px 12px;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.dialog-text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  font-weight: 500;
+  word-break: keep-all;
+  min-height: 48px;
+}
+
+.dialog-text .cursor {
+  display: inline-block;
+  width: 2px;
+  height: 18px;
+  vertical-align: -2px;
+  margin-left: 2px;
+  background: var(--ink);
+  animation: blink 700ms steps(2, end) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  transition: opacity 200ms ease;
+}
+.choices.hidden { opacity: 0; pointer-events: none; height: 0; margin-top: 0; overflow: hidden; }
+
+.choice-btn {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid rgba(31, 18, 49, 0.12);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 180ms ease, transform 140ms ease, background 180ms ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.choice-btn::before {
+  content: attr(data-label);
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+.choice-btn:hover { border-color: var(--sky-2); transform: translateY(-1px); }
+.choice-btn:active { transform: translateY(1px); background: #fef2f2; }
+
+.cta-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+.cta-area.is-visible { opacity: 1; pointer-events: auto; }
+
+.cta-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 4px 0 0;
+}
+.cta-sub {
+  font-size: 12px;
+  color: rgba(31, 18, 49, 0.62);
+  line-height: 1.4;
+  margin: 0;
+  word-break: keep-all;
+}
+.cta-button {
+  margin-top: 6px;
+  width: 100%;
+  height: 50px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 140ms ease, background 200ms ease;
+}
+.cta-button:hover { background: #0f172a; }
+.cta-button:active { transform: scale(0.98); }
+.replay-button {
+  width: 100%;
+  height: 36px;
+  margin-top: 2px;
+  border: 0;
+  background: transparent;
+  color: rgba(31, 18, 49, 0.55);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.heart {
+  position: absolute;
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  opacity: 0;
+  pointer-events: none;
+}
+.heart.is-visible {
+  animation: heartRise 1400ms ease-out forwards;
+}
+.heart svg { width: 100%; height: 100%; filter: drop-shadow(0 4px 8px rgba(251, 113, 133, 0.5)); }
+@keyframes heartRise {
+  0% { opacity: 0; transform: translateY(0) scale(0.4); }
+  30% { opacity: 1; transform: translateY(-12px) scale(1); }
+  100% { opacity: 0; transform: translateY(-90px) scale(0.8); }
+}
+
+@media (max-height: 650px) {
+  .character-stage { top: 2%; height: 50%; width: 56%; }
+  .dialog-text { font-size: 14px; min-height: 38px; }
+  .choice-btn { padding: 11px 14px; font-size: 14px; }
+  .dialog-name { font-size: 11px; }
+  .cta-button { height: 46px; font-size: 15px; }
+}
+
+</style>
+</head>
+<body>
+  <main class="scene" id="scene" aria-label="선택지 분기 엔드 카드">
+    <div class="sun" aria-hidden="true"></div>
+    <div class="particles" id="particles" aria-hidden="true"></div>
+    <button class="close-btn" type="button" aria-label="닫기">×</button>
+
+    <div class="character-stage">
+      <svg id="character" class="character" data-expression="neutral" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+        <!-- hair back -->
+        <ellipse cx="100" cy="135" rx="78" ry="98" fill="#1f2937"/>
+        <!-- face -->
+        <ellipse cx="100" cy="140" rx="58" ry="76" fill="#ffe4d6"/>
+        <!-- neck -->
+        <rect x="86" y="208" width="28" height="22" rx="8" fill="#fcc8a8"/>
+        <!-- shoulders/clothes -->
+        <path d="M 50 232 Q 100 218 150 232 L 168 240 L 32 240 Z" fill="#fb7185"/>
+        <!-- hair front bangs -->
+        <path d="M 44 102 Q 80 60 100 80 Q 120 60 156 102 Q 144 116 122 100 Q 110 105 100 102 Q 90 105 78 100 Q 56 116 44 102 Z" fill="#1f2937"/>
+        <path d="M 44 100 Q 50 84 64 88 Q 56 100 50 110 Z" fill="#1f2937"/>
+        <path d="M 156 100 Q 150 84 136 88 Q 144 100 150 110 Z" fill="#1f2937"/>
+
+        <!-- ear hint -->
+        <ellipse cx="40" cy="150" rx="6" ry="14" fill="#fcc8a8"/>
+        <ellipse cx="160" cy="150" rx="6" ry="14" fill="#fcc8a8"/>
+
+        <!-- blush (visible on happy) -->
+        <g class="blush">
+          <ellipse cx="68" cy="160" rx="10" ry="5" fill="#fb7185" opacity="0.55"/>
+          <ellipse cx="132" cy="160" rx="10" ry="5" fill="#fb7185" opacity="0.55"/>
+        </g>
+
+        <!-- eyes: neutral -->
+        <g class="eyes neutral">
+          <ellipse cx="78" cy="146" rx="5" ry="7" fill="#1f2937"/>
+          <ellipse cx="122" cy="146" rx="5" ry="7" fill="#1f2937"/>
+          <circle cx="80" cy="144" r="1.8" fill="#fff"/>
+          <circle cx="124" cy="144" r="1.8" fill="#fff"/>
+        </g>
+        <!-- eyes: happy (closed smiling) -->
+        <g class="eyes happy">
+          <path d="M 70 148 Q 78 138 86 148" stroke="#1f2937" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M 114 148 Q 122 138 130 148" stroke="#1f2937" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </g>
+        <!-- eyes: sad (downcast) -->
+        <g class="eyes sad">
+          <ellipse cx="78" cy="150" rx="4.5" ry="5" fill="#1f2937"/>
+          <ellipse cx="122" cy="150" rx="4.5" ry="5" fill="#1f2937"/>
+          <path d="M 64 138 Q 72 142 84 140" stroke="#1f2937" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M 116 140 Q 128 142 136 138" stroke="#1f2937" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        </g>
+        <!-- tear (sad only) -->
+        <g class="tear">
+          <path d="M 80 158 Q 76 168 80 174 Q 84 168 80 158 Z" fill="#60a5fa" opacity="0.9"/>
+        </g>
+
+        <!-- mouth: neutral -->
+        <path class="mouth neutral" d="M 94 180 Q 100 184 106 180" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- mouth: happy -->
+        <path class="mouth happy" d="M 84 176 Q 100 194 116 176" stroke="#1f2937" stroke-width="2.5" fill="#fb7185" stroke-linecap="round"/>
+        <!-- mouth: sad -->
+        <path class="mouth sad" d="M 88 188 Q 100 180 112 188" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <section class="dialog-card" aria-live="polite">
+      <span class="dialog-name" id="dialogName">선아</span>
+      <p class="dialog-text" id="dialogText">...</p>
+      <div class="choices hidden" id="choices"></div>
+      <div class="cta-area" id="ctaArea" aria-hidden="true">
+        <h3 class="cta-title" id="ctaTitle"></h3>
+        <p class="cta-sub" id="ctaSub"></p>
+        <button id="ctaButton" class="cta-button" type="button">이야기 계속 보기</button>
+        <button id="replayButton" class="replay-button" type="button">처음으로 돌아가기</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+(function () {
+  'use strict';
+
+  var CONFIG = {
+    landingUrl: 'https://example.com',
+    typeSpeedMs: 28,
+    scenes: {
+      intro: {
+        name: '선아',
+        expression: 'neutral',
+        dialog: '오늘 저녁, 같이 있어줄 수 있어?',
+        choices: [
+          { label: '물론, 같이 있을게.', next: 'ending_stay' },
+          { label: '미안, 오늘은 안 돼.', next: 'ending_leave' }
+        ]
+      },
+      ending_stay: {
+        name: '선아',
+        expression: 'happy',
+        dialog: '...고마워. 사실 오늘 너무 외로웠어.',
+        heart: true,
+        cta: {
+          title: '두 사람의 이야기가 시작돼요',
+          sub: '다음 장면은 게임에서 이어집니다.',
+          buttonText: '이야기 계속 보기'
+        }
+      },
+      ending_leave: {
+        name: '선아',
+        expression: 'sad',
+        dialog: '...괜찮아. 내일 다시 보자.',
+        cta: {
+          title: '아직 끝나지 않았어',
+          sub: '다른 선택지로도 이야기를 이어볼 수 있어요.',
+          buttonText: '다른 결말 보러 가기'
+        }
+      }
+    },
+    initialScene: 'intro'
+  };
+
+  var state = {
+    current: null,
+    typing: false,
+    typeTimer: null,
+    started: false,
+    choicePath: []
+  };
+
+  var els = {};
+
+  document.addEventListener('DOMContentLoaded', init);
+
+  function init() {
+    els.scene = document.getElementById('scene');
+    els.character = document.getElementById('character');
+    els.dialogName = document.getElementById('dialogName');
+    els.dialogText = document.getElementById('dialogText');
+    els.choices = document.getElementById('choices');
+    els.ctaArea = document.getElementById('ctaArea');
+    els.ctaTitle = document.getElementById('ctaTitle');
+    els.ctaSub = document.getElementById('ctaSub');
+    els.ctaButton = document.getElementById('ctaButton');
+    els.replayButton = document.getElementById('replayButton');
+
+    buildParticles();
+
+    els.ctaButton.addEventListener('click', function () {
+      track('cta_click', { path: state.choicePath.join('>') });
+      openLanding();
+    });
+    els.replayButton.addEventListener('click', function () {
+      track('replay_click');
+      reset();
+    });
+
+    var close = document.querySelector('.close-btn');
+    if (close) {
+      close.addEventListener('click', function () {
+        track('close_click');
+        openLanding();
+      });
+    }
+
+    els.dialogText.addEventListener('click', skipTyping);
+
+    showScene(CONFIG.initialScene);
+    track('creative_view');
+  }
+
+  function buildParticles() {
+    var p = document.getElementById('particles');
+    if (!p) return;
+    for (var i = 0; i < 18; i++) {
+      var s = document.createElement('span');
+      s.style.left = Math.random() * 100 + '%';
+      s.style.animationDelay = (Math.random() * 6500) + 'ms';
+      s.style.animationDuration = (4500 + Math.random() * 3500) + 'ms';
+      var size = 2 + Math.random() * 3;
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      p.appendChild(s);
+    }
+  }
+
+  function showScene(sceneId) {
+    var scene = CONFIG.scenes[sceneId];
+    if (!scene) return;
+    state.current = sceneId;
+    els.character.dataset.expression = scene.expression || 'neutral';
+    els.dialogName.textContent = scene.name || '';
+    els.choices.classList.add('hidden');
+    els.ctaArea.classList.remove('is-visible');
+    typeDialog(scene.dialog, function () {
+      if (scene.choices) {
+        renderChoices(scene.choices);
+      }
+      if (scene.cta) {
+        renderCta(scene.cta);
+      }
+      if (scene.heart) {
+        spawnHearts();
+      }
+    });
+    track('scene_show', { scene: sceneId });
+  }
+
+  function typeDialog(text, onDone) {
+    if (state.typeTimer) {
+      clearTimeout(state.typeTimer);
+      state.typeTimer = null;
+    }
+    state.typing = true;
+    els.dialogText.innerHTML = '<span class="cursor"></span>';
+    var i = 0;
+    function step() {
+      if (i > text.length) {
+        state.typing = false;
+        els.dialogText.innerHTML = escapeHtml(text);
+        if (onDone) onDone();
+        return;
+      }
+      els.dialogText.innerHTML = escapeHtml(text.slice(0, i)) + '<span class="cursor"></span>';
+      i++;
+      state.typeTimer = setTimeout(step, CONFIG.typeSpeedMs);
+    }
+    step();
+  }
+
+  function skipTyping() {
+    if (!state.typing) return;
+    if (state.typeTimer) clearTimeout(state.typeTimer);
+    state.typing = false;
+    var scene = CONFIG.scenes[state.current];
+    els.dialogText.innerHTML = escapeHtml(scene.dialog);
+    if (scene.choices) renderChoices(scene.choices);
+    if (scene.cta) renderCta(scene.cta);
+    if (scene.heart) spawnHearts();
+  }
+
+  function renderChoices(choices) {
+    els.choices.innerHTML = '';
+    choices.forEach(function (c, idx) {
+      var btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.type = 'button';
+      btn.dataset.label = String(idx + 1);
+      btn.textContent = c.label;
+      btn.addEventListener('click', function () { onChoice(c, idx); });
+      els.choices.appendChild(btn);
+    });
+    requestAnimationFrame(function () {
+      els.choices.classList.remove('hidden');
+    });
+  }
+
+  function onChoice(choice, idx) {
+    if (!state.started) {
+      state.started = true;
+      track('first_interaction', { choice: idx + 1 });
+    }
+    state.choicePath.push(String(idx + 1));
+    track('choice_pick', { scene: state.current, choice: idx + 1 });
+    setTimeout(function () { showScene(choice.next); }, 80);
+  }
+
+  function renderCta(cta) {
+    els.ctaTitle.textContent = cta.title || '';
+    els.ctaSub.textContent = cta.sub || '';
+    if (cta.buttonText) els.ctaButton.textContent = cta.buttonText;
+    requestAnimationFrame(function () {
+      els.ctaArea.classList.add('is-visible');
+    });
+  }
+
+  function spawnHearts() {
+    var stage = els.scene;
+    var charRect = els.character.getBoundingClientRect();
+    var sceneRect = stage.getBoundingClientRect();
+    var baseX = charRect.left - sceneRect.left + charRect.width / 2;
+    var baseY = charRect.top - sceneRect.top + charRect.height * 0.45;
+    for (var i = 0; i < 5; i++) {
+      var h = document.createElement('div');
+      h.className = 'heart';
+      h.innerHTML = '<svg viewBox="0 0 28 28"><path d="M14 24 C 4 16, 4 8, 9 6 Q 14 4 14 10 Q 14 4 19 6 C 24 8, 24 16, 14 24 Z" fill="#fb7185"/></svg>';
+      h.style.left = (baseX - 14 + (Math.random() - 0.5) * 80) + 'px';
+      h.style.top = (baseY + (Math.random() - 0.5) * 30) + 'px';
+      h.style.animationDelay = (i * 120) + 'ms';
+      stage.appendChild(h);
+      setTimeout(function (el) { return function () { el.classList.add('is-visible'); }; }(h), 30 + i * 120);
+      setTimeout(function (el) { return function () { if (el.parentNode) el.parentNode.removeChild(el); }; }(h), 2000 + i * 120);
+    }
+  }
+
+  function reset() {
+    state.choicePath = [];
+    state.started = false;
+    showScene(CONFIG.initialScene);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  function getLandingUrl() {
+    var params = new URLSearchParams(window.location.search);
+    return params.get('clickTag') || params.get('clickTAG') || params.get('landing') || window.clickTag || window.clickTAG || CONFIG.landingUrl;
+  }
+
+  function openLanding() {
+    var url = getLandingUrl();
+    if (!url) return;
+    try {
+      if (window.mraid && typeof window.mraid.open === 'function') {
+        window.mraid.open(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch (e) {
+      window.location.href = url;
+    }
+  }
+
+  function track(eventName, payload) {
+    var detail = payload || {};
+    window.dispatchEvent(new CustomEvent('magentPlayableEvent', {
+      detail: { name: eventName, payload: detail, ts: Date.now() }
+    }));
+    if (window.MAGENT_DEBUG) console.log('[MagentBranching]', eventName, detail);
+  }
+})();
+
+</script>
+</body>
+</html>
